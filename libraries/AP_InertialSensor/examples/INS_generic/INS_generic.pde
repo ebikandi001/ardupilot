@@ -37,32 +37,13 @@
 #include <AP_NavEKF.h>
 #include <AP_HAL_Linux.h>
 
+#include <stdio.h>
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 #define CONFIG_INS_TYPE HAL_INS_DEFAULT
 
 AP_InertialSensor ins;
-/*****
-#if CONFIG_INS_TYPE == HAL_INS_MPU6000
-AP_InertialSensor_MPU6000 ins;
-#elif CONFIG_INS_TYPE == HAL_INS_PX4
-AP_InertialSensor_PX4 ins;
-#elif CONFIG_INS_TYPE == HAL_INS_VRBRAIN
-AP_InertialSensor_VRBRAIN ins;
-#elif CONFIG_INS_TYPE == HAL_INS_HIL
-AP_InertialSensor_HIL ins;
-#elif CONFIG_INS_TYPE == HAL_INS_FLYMAPLE
-AP_InertialSensor_Flymaple ins;
-#elif CONFIG_INS_TYPE == HAL_INS_L3G4200D
-AP_InertialSensor_L3G4200D ins;
-#elif CONFIG_INS_TYPE == HAL_INS_MPU9250
-AP_InertialSensor_MPU9250 ins;
-#elif CONFIG_INS_TYPE == HAL_INS_L3GD20
-AP_InertialSensor_L3GD20 ins;
-#else
-  #error Unrecognised CONFIG_INS_TYPE setting.
-#endif // CONFIG_INS_TYPE
-*****/
+
 
 void setup(void)
 {
@@ -216,19 +197,24 @@ void run_test()
 
         // wait until we have a sample
         ins.wait_for_sample(1000);
-
-        // read samples from ins
         ins.update();
-        accel = ins.get_accel();
-        gyro = ins.get_gyro();
+        
+        uint8_t num_sensors = ins.get_num_sensors();
+        for(uint8_t i=0; i<num_sensors; i++){
+        // read samples from ins
 
-        length = accel.length();
+            accel = ins.get_accel(i);
+            gyro = ins.get_gyro(i);
 
-		if (counter++ % 50 == 0) {
-			// display results
-			hal.console->printf_P(PSTR("Accel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
-								  accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
-		}
+            length = accel.length();
+
+	        if (counter++ % 50 == 0) {
+		        // display results
+		        hal.console->printf_P(PSTR("Sensor number: %d \nAccel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
+							          i, accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
+	        }
+        }
+        
     }
 
     // clear user input

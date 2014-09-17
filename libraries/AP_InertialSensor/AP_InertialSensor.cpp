@@ -151,18 +151,43 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
     if(ins != NULL)
         drivers[instance] = ins;
 
-}
+    
+}   
 
 bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 {
 
     bool success = true;
-     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+
+  /*  
+for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+    if(drivers[i] == NULL)
+    detect_instance(i);
+       printf("i: %d\n", i);
+    //success &= drivers[i]->init(style, sample_rate);
+    drivers[i]->init(style, sample_rate);
+}
+
+*/
+  /****************
+    MULTIPLE IMU TEST WITH HIL DRIVER
+    ***************/
+
+    for (uint8_t i=0; i<INS_MAX_INSTANCES-1; i++) {
         if(drivers[i] == NULL)
             detect_instance(i);
-        /*success &=*/ drivers[i]->init(style, sample_rate);
+               printf("i: %d\n", i);
+        //success &= drivers[i]->init(style, sample_rate);
+        drivers[i]->init(style, sample_rate);
     }
-    //TODO check return statement on drivers[i]->init();
+    //Dumb driver
+    AP_InertialSensor_Backend *ins = new AP_InertialSensor_HIL(*this);
+    drivers[INS_MAX_INSTANCES-1] = ins;
+    drivers[INS_MAX_INSTANCES-1]->init(COLD_START, sample_rate);
+    hal.console->println("IMU_HIL");
+/******     end test initialization ****************/
+    
+    //TODO check return statement on drivers[i]->init();**/
     return success;
 }
 
@@ -197,10 +222,11 @@ bool AP_InertialSensor::update()
 {
     bool success = true;
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-               if(drivers[i] == NULL){
+        if(drivers[i] == NULL){
             detect_instance(i);
         }
         else{
+            num_instances = i+1;
             success &= drivers[i]->_update();
         }
     }

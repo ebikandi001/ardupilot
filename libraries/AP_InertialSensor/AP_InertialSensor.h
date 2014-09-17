@@ -168,6 +168,10 @@ public:
     float get_delta_time() const;
 
     float get_gyro_drift_rate(void);
+    
+    uint8_t get_num_sensors(void) const {
+        return num_instances;
+    }
 
     // save parameters to eeprom
     void  _save_parameters();
@@ -198,6 +202,9 @@ public:
 
 private:
     AP_InertialSensor_Backend *drivers[INS_MAX_INSTANCES];
+  
+    /// number of IMU instances present
+    uint8_t num_instances:2;
 
     /// primary IMU instance
     uint8_t primary_instance;
@@ -218,4 +225,5 @@ private:
 #include <AP_InertialSensor_MPU9250.h>
 #include <AP_InertialSensor_L3GD20.h>
 
+//#include <AP_InertialSensor_DUMB.h>
 #endif // __AP_INERTIAL_SENSOR_H__
