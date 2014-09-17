@@ -41,6 +41,8 @@ const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 #define CONFIG_INS_TYPE HAL_INS_DEFAULT
 
+AP_InertialSensor ins;
+/*****
 #if CONFIG_INS_TYPE == HAL_INS_MPU6000
 AP_InertialSensor_MPU6000 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_PX4
@@ -60,12 +62,14 @@ AP_InertialSensor_L3GD20 ins;
 #else
   #error Unrecognised CONFIG_INS_TYPE setting.
 #endif // CONFIG_INS_TYPE
+*****/
 
 void setup(void)
 {
     hal.console->println("AP_InertialSensor startup...");
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
+
     // we need to stop the barometer from holding the SPI bus
     hal.gpio->pinMode(40, HAL_GPIO_OUTPUT);
     hal.gpio->write(40, 1);
@@ -76,6 +80,7 @@ void setup(void)
 
     // display initial values
     display_offsets_and_scaling();
+
     hal.console->println("Complete. Reading:");
 }
 

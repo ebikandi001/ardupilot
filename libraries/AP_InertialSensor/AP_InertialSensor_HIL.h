@@ -6,16 +6,16 @@
 #include <AP_Progmem.h>
 #include "AP_InertialSensor.h"
 
-class AP_InertialSensor_HIL : public AP_InertialSensor
+class AP_InertialSensor_HIL : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_HIL();
+    AP_InertialSensor_HIL(AP_InertialSensor &_imu);
 
     /* Concrete implementation of AP_InertialSensor functions: */
-    bool            update();
+    bool            _update();
     float	        get_delta_time() const;
-    float           get_gyro_drift_rate();
+    float           get_gyro_drift_rate(void);
     bool            wait_for_sample(uint16_t timeout_ms);
     void            set_accel(uint8_t instance, const Vector3f &accel);
     void            set_gyro(uint8_t instance, const Vector3f &gyro);
@@ -26,7 +26,7 @@ public:
 
 private:
     bool            _sample_available();
-    uint16_t        _init_sensor( Sample_rate sample_rate );
+    uint16_t        _init_sensor( AP_InertialSensor::Sample_rate sample_rate );
     uint32_t         _sample_period_usec;
     uint32_t        _last_sample_usec;
     uint32_t        _last_accel_usec[INS_MAX_INSTANCES];

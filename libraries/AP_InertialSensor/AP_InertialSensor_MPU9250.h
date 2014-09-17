@@ -9,36 +9,36 @@
 #include <AP_Progmem.h>
 #include <Filter.h>
 #include <LowPassFilter2p.h>
-#include "AP_InertialSensor.h"
+#include <AP_InertialSensor.h>
 
 // enable debug to see a register dump on startup
 #define MPU9250_DEBUG 0
 
-class AP_InertialSensor_MPU9250 : public AP_InertialSensor
+class AP_InertialSensor_MPU9250 : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_MPU9250();
+    AP_InertialSensor_MPU9250(AP_InertialSensor &_imu);
 
     /* Concrete implementation of AP_InertialSensor functions: */
-    bool                update();
-    float               get_gyro_drift_rate();
+    bool                _update();
+    float               get_gyro_drift_rate(void);
 
     // wait for a sample to be available, with timeout in milliseconds
     bool                wait_for_sample(uint16_t timeout_ms);
 
     // get_delta_time returns the time period in seconds overwhich the sensor data was collected
-    float            	get_delta_time() const;
-
+    float                get_delta_time() const;
+    uint16_t             _init_sensor( AP_InertialSensor::Sample_rate sample_rate );
 private:
-    uint16_t             _init_sensor( Sample_rate sample_rate );
+
 
     void                 _read_data_transaction();
     bool                 _data_ready();
     void                 _poll_data(void);
     uint8_t              _register_read( uint8_t reg );
     void                 _register_write( uint8_t reg, uint8_t val );
-    bool                 _hardware_init(Sample_rate sample_rate);
+    bool                 _hardware_init(AP_InertialSensor::Sample_rate sample_rate);
     bool                 _sample_available();
 
     AP_HAL::SPIDeviceDriver *_spi;
