@@ -22,11 +22,12 @@
 
 #include <GCS_MAVLink.h>
 #include <AP_InertialSensor.h>
+#include <AP_Notify.h>
 
 class AP_InertialSensor_Backend
 {
 public:
-  AP_InertialSensor_Backend(AP_InertialSensor & _imu, AP_HAL::SPIDeviceDriver *_port);
+  AP_InertialSensor_Backend(AP_InertialSensor & _imu);
 
     // we declare a virtual destructor so that drivers can
     // override with a custom destructor if need be.
@@ -45,11 +46,11 @@ public:
     ///
     /// @param style  The initialisation startup style.
     ///
-    virtual void init( Start_style style,
-                       Sample_rate sample_rate);
+    virtual void init( AP_InertialSensor::Start_style style,
+                       AP_InertialSensor::Sample_rate sample_rate);
 
     // sensor specific init to be overwritten by descendant classes
-    virtual uint16_t        _init_sensor( Sample_rate sample_rate ) = 0;
+    virtual uint16_t _init_sensor( AP_InertialSensor::Sample_rate sample_rate ) = 0;
 
 
     /// Perform cold startup initialisation for just the accelerometers.
@@ -83,50 +84,23 @@ public:
     // wait for a sample to be available, with timeout in milliseconds
     virtual bool wait_for_sample(uint16_t timeout_ms) = 0;
 
-    // sensor specific init to be overwritten by descendant classes
-    virtual uint16_t        _init_sensor( Sample_rate sample_rate ) = 0;
-
 #if !defined( __AVR_ATmega1280__ )
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/
     // original sketch available at http://rolfeschmidt.com/mathtools/skimetrics/adxl_gn_calibration.pde
 
     // _calibrate_accel - perform low level accel calibration
-    virtual bool            _calibrate_accel(Vector3f accel_sample[6], Vector3f& accel_offsets, Vector3f& accel_scale);
-    virtual void            _calibrate_update_matrices(float dS[6], float JS[6][6], float beta[6], float data[3]);
-    virtual void            _calibrate_reset_matrices(float dS[6], float JS[6][6]);
-    virtual void            _calibrate_find_delta(float dS[6], float JS[6][6], float delta[6]);
-    virtual void            _calculate_trim(Vector3f accel_sample, float& trim_roll, float& trim_pitch);
+    bool            _calibrate_accel(Vector3f accel_sample[6], Vector3f& accel_offsets, Vector3f& accel_scale);
+    void            _calibrate_update_matrices(float dS[6], float JS[6][6], float beta[6], float data[3]);
+    void            _calibrate_reset_matrices(float dS[6], float JS[6][6]);
+    void            _calibrate_find_delta(float dS[6], float JS[6][6], float delta[6]);
+    void            _calculate_trim(Vector3f accel_sample, float& trim_roll, float& trim_pitch);
 #endif
 
 protected:
-    AP_HAL::SPIDeviceDriver *port;                          ///< SPI we are attached to
+    //TODO "port" object to encapsulate the bus driver
+    //AP_HAL::SPIDeviceDriver *port;                          ///< SPI we are attached to
     AP_InertialSensor &imu;                                 ///< access to frontend (for parameters)
-
-    // Most recent accelerometer reading obtained by ::_update
-    Vector3f _accel[INS_MAX_INSTANCES];
-
-    // previous accelerometer reading obtained by ::_update
-    Vector3f _previous_accel[INS_MAX_INSTANCES];
-
-    // Most recent gyro reading obtained by ::_update
-    Vector3f _gyro[INS_MAX_INSTANCES];
-
-    // product id
-    AP_Int16 _product_id;
-
-    // accelerometer scaling and offsets
-    AP_Vector3f             _accel_scale[INS_MAX_INSTANCES];
-    AP_Vector3f             _accel_offset[INS_MAX_INSTANCES];
-    AP_Vector3f             _gyro_offset[INS_MAX_INSTANCES];
-
-    // filtering frequency (0 means default)
-    AP_Int8                 _mpu6000_filter;
-
-    // board orientation from AHRS
-    enum Rotation     _board_orientation;
-
-
 };
 
 #endif // __AP_INERTIALSENSOR_BACKEND_H__

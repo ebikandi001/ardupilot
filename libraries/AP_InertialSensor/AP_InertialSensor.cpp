@@ -1,11 +1,13 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #include <AP_Progmem.h>
-#include "AP_InertialSensor.h"
+#include <AP_InertialSensor.h>
 
 #include <AP_Common.h>
 #include <AP_HAL.h>
 #include <AP_Notify.h>
+
+#include <stdio.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -103,24 +105,108 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
 
     AP_GROUPEND
 };
-
-AP_InertialSensor::AP_InertialSensor() :
+/*
+AP_InertialSensor::AP_InertialSensor():
     _accel(),
     _gyro(),
     _board_orientation(ROTATION_NONE)
 {
-    AP_Param::setup_object_defaults(this, var_info);        
+    hal.console->println("AP_InertialSensor_Constructor");
+    AP_Param::setup_object_defaults(this, var_info);  
+    primary_instance = 0;      
 }
+*/
+void AP_InertialSensor::detect_instance(uint8_t instance)
+{   
+    AP_InertialSensor_Backend *ins = NULL;
+    #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
+        ins = new AP_InertialSensor_MPU6000(*this);
+        hal.console->println("IMU_MPU6000");
+    #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
+        ins = new AP_InertialSensor_PX4(*this);
+        hal.console->println("IMU_PX4");
+    #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
+        ins = new AP_InertialSensor_VRBRAIN(*this);
+        hal.console->println("IMU_VRBRAIN");
+    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NONE || CONFIG_HAL_BOARD == HAL_BOARD_EMPTY ||CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL 
+        ins = new AP_InertialSensor_HIL(*this);
+        hal.console->println("IMU_HIL");
+    #elif CONFIG_HAL_BOARD == HAL_BOARD_APM1
+        ins = new AP_InertialSensor_OILPAN(*this);
+        hal.console->println("IMU_OILPAN");
+    #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
+        ins = new AP_InertialSensor_FLYMAPLE(*this);
+        hal.console->println("IMU_FLYMAPLE");
+    /*#elif CONFIG_INS_TYPE == HAL_INS_L3G4200D //TODO Not configured in AP_Hal_Boards.h
+        ins = new AP_InertialSensor_L3G4200D(*this);
+        hal.console->println("IMU_L3G4200D");
+        printf("L3G4200D \n");  */  
+    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
+        ins = new AP_InertialSensor_MPU9250(*this);
+        //ins = new AP_InertialSensor_MPU6000(*this); //for testing
+        hal.console->println("IMU_MPU9250");
+    #endif
+
+    if(ins != NULL)
+        drivers[instance] = ins;
+    else
+        printf("IMU not Detected\n");  
+}
+
+bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
+{
+
+    bool success = true;
+     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+        if(drivers[i] == NULL)
+            detect_instance(i);
+        /*success &=*/ drivers[i]->init(style, sample_rate);
+    }
+    //TODO check return statement on drivers[i]->init();
+    return success;
+}
+
+void AP_InertialSensor::init_accel()
+{
+     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+        if(drivers[i] == NULL){
+            detect_instance(i);
+        }
+        else{
+            drivers[i]->init_accel();
+        }
+    }
+}
+
+void AP_InertialSensor::init_gyro()
+{
+     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+        if(drivers[i] == NULL){
+            detect_instance(i);
+        }
+        else{
+            drivers[i]->init_gyro();
+        }
+;
+    }
+}
+
 
 /// update - returns true if all the IMU's values have been updated successfully
 bool AP_InertialSensor::update()
 {
     bool success = true;
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-        success &= drivers[i]->_update();
+               if(drivers[i] == NULL){
+            detect_instance(i);
+        }
+        else{
+            success &= drivers[i]->_update();
+        }
     }
     return success;
 }
+
 
 
 // TODO needs to be modified
@@ -455,5 +541,19 @@ void AP_InertialSensor::_calculate_trim(Vector3f accel_sample, float& trim_roll,
     }
 }
 
+bool AP_InertialSensor::wait_for_sample(uint16_t timeout_ms) 
+{ 
+	return drivers[primary_instance]->wait_for_sample(timeout_ms);  
+}
+
+float AP_InertialSensor::get_delta_time() const
+{ 
+	return drivers[primary_instance]->get_delta_time(); 
+} 
+
+float AP_InertialSensor::get_gyro_drift_rate(void)
+{
+	return drivers[primary_instance]->get_gyro_drift_rate(); 
+}
 #endif // __AVR_ATmega1280__
 

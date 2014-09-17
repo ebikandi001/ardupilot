@@ -15,48 +15,48 @@
  */
 
 #include <AP_InertialSensor.h>
-
+#include <stdio.h>
 extern const AP_HAL::HAL& hal;
 
-AP_InertialSensor_Backend(AP_InertialSensor & _imu, AP_HAL::SPIDeviceDriver *_port) :
-    port(_port),
+AP_InertialSensor_Backend::AP_InertialSensor_Backend(AP_InertialSensor &_imu):
+    //port(_port),
     imu(_imu)
 {
-
 }
 
 void
-AP_InertialSensor::init( Start_style style,
-                         Sample_rate sample_rate)
+AP_InertialSensor_Backend::init( AP_InertialSensor::Start_style style,
+                         AP_InertialSensor::Sample_rate sample_rate)
 {
-    _product_id = _init_sensor(sample_rate);
+    imu._product_id = _init_sensor(sample_rate);
 
     // check scaling
-    for (uint8_t i=0; i<get_accel_count(); i++) {
-        if (_accel_scale[i].get().is_zero()) {
-            _accel_scale[i].set(Vector3f(1,1,1));
+    for (uint8_t i=0; i<imu.get_accel_count(); i++) {
+        if (imu._accel_scale[i].get().is_zero()) {
+            imu._accel_scale[i].set(Vector3f(1,1,1));
         }
     }
 
-    if (WARM_START != style) {
+    if (AP_InertialSensor::WARM_START != style) {
         // do cold-start calibration for gyro only
-        _init_gyro();
+        init_gyro();
     }
 }
 
+/*
 void
-AP_InertialSensor::init_gyro()
+AP_InertialSensor_Backend::init_gyro()
 {
     _init_gyro();
 
     // save calibration
     _save_parameters();
-}
+}*/
 
 void
-AP_InertialSensor::_init_gyro()
+AP_InertialSensor_Backend::init_gyro()
 {
-    uint8_t num_gyros = min(get_gyro_count(), INS_MAX_INSTANCES);
+    uint8_t num_gyros = min(imu.get_gyro_count(), INS_MAX_INSTANCES);
     Vector3f last_average[INS_MAX_INSTANCES], best_avg[INS_MAX_INSTANCES];
     float best_diff[INS_MAX_INSTANCES];
     bool converged[INS_MAX_INSTANCES];
@@ -69,7 +69,7 @@ AP_InertialSensor::_init_gyro()
 
     // remove existing gyro offsets
     for (uint8_t k=0; k<num_gyros; k++) {
-        _gyro_offset[k] = Vector3f(0,0,0);
+        imu._gyro_offset[k] = Vector3f(0,0,0);
         best_diff[k] = 0;
         last_average[k].zero();
         converged[k] = false;
@@ -103,7 +103,7 @@ AP_InertialSensor::_init_gyro()
         for (i=0; i<50; i++) {
             _update();
             for (uint8_t k=0; k<num_gyros; k++) {
-                gyro_sum[k] += get_gyro(k);
+                gyro_sum[k] += imu.get_gyro(k);
             }
             hal.scheduler->delay(5);
         }
@@ -121,7 +121,7 @@ AP_InertialSensor::_init_gyro()
             } else if (gyro_diff[k].length() < ToRad(0.1f)) {
                 // we want the average to be within 0.1 bit, which is 0.04 degrees/s
                 last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
-                _gyro_offset[k] = last_average[k];            
+                imu._gyro_offset[k] = last_average[k];            
                 converged[k] = true;
                 num_converged++;
             } else if (diff_norm[k] < best_diff[k]) {
@@ -147,25 +147,27 @@ AP_InertialSensor::_init_gyro()
         if (!converged[k]) {
             hal.console->printf_P(PSTR("gyro[%u] did not converge: diff=%f dps\n"), 
                                   (unsigned)k, ToDeg(best_diff[k]));
-            _gyro_offset[k] = best_avg[k];
+            imu._gyro_offset[k] = best_avg[k];
         }
     }
+     
+    imu._save_parameters();
 }
 
-
+/*
 void
-AP_InertialSensor::init_accel()
+AP_InertialSensor_Backend::init_accel()
 {
     _init_accel();
 
     // save calibration
     _save_parameters();
-}
+}*/
 
 void
-AP_InertialSensor::_init_accel()
+AP_InertialSensor_Backend::init_accel()
 {
-    uint8_t num_accels = min(get_accel_count(), INS_MAX_INSTANCES);
+    uint8_t num_accels = min(imu.get_accel_count(), INS_MAX_INSTANCES);
     uint8_t flashcount = 0;
     Vector3f prev[INS_MAX_INSTANCES];
     Vector3f accel_offset[INS_MAX_INSTANCES];
@@ -185,8 +187,8 @@ AP_InertialSensor::_init_accel()
 
     // clear accelerometer offsets and scaling
     for (uint8_t k=0; k<num_accels; k++) {
-        _accel_offset[k] = Vector3f(0,0,0);
-        _accel_scale[k] = Vector3f(1,1,1);
+        imu._accel_offset[k] = Vector3f(0,0,0);
+        imu._accel_scale[k] = Vector3f(1,1,1);
 
         // initialise accel offsets to a large value the first time
         // this will force us to calibrate accels at least twice
@@ -203,7 +205,7 @@ AP_InertialSensor::_init_accel()
             prev[k] = accel_offset[k];
 
             // get new offsets
-            accel_offset[k] = get_accel(k);
+            accel_offset[k] = imu.get_accel(k);
         }
 
         // We take some readings...
@@ -214,7 +216,7 @@ AP_InertialSensor::_init_accel()
 
             // low pass filter the offsets
             for (uint8_t k=0; k<num_accels; k++) {
-                accel_offset[k] = accel_offset[k] * 0.9f + get_accel(k) * 0.1f;
+                accel_offset[k] = accel_offset[k] * 0.9f + imu.get_accel(k) * 0.1f;
             }
 
             // display some output to the user
@@ -252,9 +254,10 @@ AP_InertialSensor::_init_accel()
 
     // set the global accel offsets
     for (uint8_t k=0; k<num_accels; k++) {
-        _accel_offset[k] = accel_offset[k];
+        imu._accel_offset[k] = accel_offset[k];
     }
 
+    imu._save_parameters();
     // stop flashing the leds
     AP_Notify::flags.initialising = false;
 
