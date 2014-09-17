@@ -143,14 +143,14 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
         printf("L3G4200D \n");  */  
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
         ins = new AP_InertialSensor_MPU9250(*this);
-        //ins = new AP_InertialSensor_MPU6000(*this); //for testing
         hal.console->println("IMU_MPU9250");
+    #else
+        #error Unrecognised IMU.
     #endif
 
     if(ins != NULL)
         drivers[instance] = ins;
-    else
-        printf("IMU not Detected\n");  
+
 }
 
 bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
