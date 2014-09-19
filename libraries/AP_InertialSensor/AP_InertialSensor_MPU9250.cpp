@@ -21,7 +21,6 @@
 
 #include "AP_InertialSensor_MPU9250.h"
 #include "../AP_HAL_Linux/GPIO.h"
-#include <stdio.h>
 
 extern const AP_HAL::HAL& hal;
 

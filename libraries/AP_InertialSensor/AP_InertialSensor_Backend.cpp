@@ -264,3 +264,8 @@ AP_InertialSensor_Backend::init_accel()
     hal.console->print_P(PSTR(" "));
 
 }
+
+AP_Int16 AP_InertialSensor_Backend::get_product_id() const
+{
+    return imu._product_id;
+}

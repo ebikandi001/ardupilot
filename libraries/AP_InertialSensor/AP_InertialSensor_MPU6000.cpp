@@ -2,7 +2,7 @@
 
 #include <AP_HAL.h>
 #include "AP_InertialSensor_MPU6000.h"
-
+#include <stdio.h>
 extern const AP_HAL::HAL& hal;
 
 // MPU6000 accelerometer scaling
@@ -206,6 +206,7 @@ uint16_t AP_InertialSensor_MPU6000::_init_sensor( AP_InertialSensor::Sample_rate
     uint8_t tries = 0;
     do {
         bool success = _hardware_init(sample_rate);
+        
         if (success) {
             hal.scheduler->delay(5+2);
             if (!_spi_sem->take(100)) {
@@ -493,18 +494,20 @@ bool AP_InertialSensor_MPU6000::_hardware_init(AP_InertialSensor::Sample_rate sa
 
     // Chip reset
     uint8_t tries;
+    _register_write(MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
+    hal.scheduler->delay(100);
+
     for (tries = 0; tries<5; tries++) {
-        _register_write(MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
-        hal.scheduler->delay(100);
 
         // Wake up device and select GyroZ clock. Note that the
         // MPU6000 starts up in sleep mode, and it can take some time
         // for it to come out of sleep
+        
         _register_write(MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_CLK_ZGYRO);
         hal.scheduler->delay(5);
 
         // check it has woken up
-        if (_register_read(MPUREG_PWR_MGMT_1) == BIT_PWR_MGMT_1_CLK_ZGYRO) {
+        if (_register_read(MPUREG_PWR_MGMT_1)== BIT_PWR_MGMT_1_CLK_ZGYRO) {
             break;
         }
 #if MPU6000_DEBUG

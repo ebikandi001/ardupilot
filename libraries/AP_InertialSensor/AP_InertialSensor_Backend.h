@@ -84,6 +84,8 @@ public:
     // wait for a sample to be available, with timeout in milliseconds
     virtual bool wait_for_sample(uint16_t timeout_ms) = 0;
 
+    virtual AP_Int16 get_product_id() const;
+
 #if !defined( __AVR_ATmega1280__ )
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/

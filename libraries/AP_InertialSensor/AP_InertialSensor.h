@@ -118,7 +118,7 @@ public:
     ///
     /// @returns	vector of current accelerations in m/s/s
     ///
-    const Vector3f     &get_accel(uint8_t i) const { return _accel[i]; }
+    const Vector3f     &get_accel(uint8_t i) const {  return _accel[i]; }
     const Vector3f     &get_accel(void) const { return get_accel(get_primary_accel()); }
     void       set_accel(uint8_t instance, const Vector3f &accel) {}
 
@@ -138,6 +138,10 @@ public:
     // get accel scale
     const Vector3f &get_accel_scale(uint8_t i) const { return _accel_scale[i]; }
     const Vector3f &get_accel_scale(void) const { return get_accel_scale(get_primary_accel()); }
+
+    // get accel scale
+    const AP_Int16 get_product_id(uint8_t i) const;
+    const AP_Int16 get_product_id(void) const { return get_product_id(get_primary_accel()); }
 
     // class level parameters
     static const struct AP_Param::GroupInfo var_info[];

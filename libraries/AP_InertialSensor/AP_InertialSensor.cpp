@@ -142,14 +142,17 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
         hal.console->println("IMU_L3G4200D");
         printf("L3G4200D \n");  */  
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-        ins = new AP_InertialSensor_MPU9250(*this);
-        hal.console->println("IMU_MPU9250");
+        ins = new AP_InertialSensor_MPU6000(*this);
+        //ins = new AP_InertialSensor_MPU9250(*this);
+        hal.console->println("IMU_MPU6000");
     #else
         #error Unrecognised IMU.
     #endif
 
-    if(ins != NULL)
+    if(ins != NULL){
         drivers[instance] = ins;
+        num_instances++;
+    }
 
     
 }   
@@ -172,19 +175,20 @@ for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
   /****************
     MULTIPLE IMU TEST WITH HIL DRIVER
     ***************/
+    detect_instance(0);
+    drivers[0]->init(COLD_START, sample_rate);
+    AP_InertialSensor_Backend *ins;
 
-    for (uint8_t i=0; i<INS_MAX_INSTANCES-1; i++) {
+    for (uint8_t i=1; i<INS_MAX_INSTANCES; i++) {
         if(drivers[i] == NULL)
-            detect_instance(i);
-               printf("i: %d\n", i);
+        ins = new AP_InertialSensor_MPU6000(*this);
+        drivers[i] = ins;
+        drivers[i]->init(COLD_START, sample_rate);
+        hal.console->println("IMU_MPU6000");
+        num_instances++;
         //success &= drivers[i]->init(style, sample_rate);
-        drivers[i]->init(style, sample_rate);
     }
-    //Dumb driver
-    AP_InertialSensor_Backend *ins = new AP_InertialSensor_HIL(*this);
-    drivers[INS_MAX_INSTANCES-1] = ins;
-    drivers[INS_MAX_INSTANCES-1]->init(COLD_START, sample_rate);
-    hal.console->println("IMU_HIL");
+    
 /******     end test initialization ****************/
     
     //TODO check return statement on drivers[i]->init();**/
@@ -226,7 +230,6 @@ bool AP_InertialSensor::update()
             detect_instance(i);
         }
         else{
-            num_instances = i+1;
             success &= drivers[i]->_update();
         }
     }
@@ -581,5 +584,12 @@ float AP_InertialSensor::get_gyro_drift_rate(void)
 {
 	return drivers[primary_instance]->get_gyro_drift_rate(); 
 }
+
+const AP_Int16 AP_InertialSensor::get_product_id(uint8_t i) const
+{
+	return drivers[i]->get_product_id(); 
+}
+
+
 #endif // __AVR_ATmega1280__
 
