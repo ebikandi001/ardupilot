@@ -117,33 +117,37 @@ AP_InertialSensor::AP_InertialSensor():
 }
 */
 void AP_InertialSensor::detect_instance(uint8_t instance)
-{   //TODO state objetu bat sortu
-   /* AP_InertialSensor_Backend *ins = NULL;
+{   
+    AP_InertialSensor_Backend *ins = NULL;
+    
+    state[instance].instance = instance;
+    state[instance]._board_orientation = ROTATION_NONE;
+
     #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
-        ins = new AP_InertialSensor_MPU6000(*this);
+     //   ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
         hal.console->println("IMU_MPU6000");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
-        ins = new AP_InertialSensor_PX4(*this);
+     //   ins = new AP_InertialSensor_PX4(*this, state[instance]);
         hal.console->println("IMU_PX4");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-        ins = new AP_InertialSensor_VRBRAIN(*this);
+     //   ins = new AP_InertialSensor_VRBRAIN(*this, state[instance]);
         hal.console->println("IMU_VRBRAIN");
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NONE || CONFIG_HAL_BOARD == HAL_BOARD_EMPTY ||CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL 
-        ins = new AP_InertialSensor_HIL(*this);
+     //   ins = new AP_InertialSensor_HIL(*this, state[instance]);
         hal.console->println("IMU_HIL");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_APM1
-        ins = new AP_InertialSensor_OILPAN(*this);
+     //   ins = new AP_InertialSensor_OILPAN(*this, state[instance]);
         hal.console->println("IMU_OILPAN");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
-        ins = new AP_InertialSensor_FLYMAPLE(*this);
+     //   ins = new AP_InertialSensor_FLYMAPLE(*this, state[instance]);
         hal.console->println("IMU_FLYMAPLE");
     /*#elif CONFIG_INS_TYPE == HAL_INS_L3G4200D //TODO Not configured in AP_Hal_Boards.h
         ins = new AP_InertialSensor_L3G4200D(*this);
         hal.console->println("IMU_L3G4200D");
         printf("L3G4200D \n");  */  
-/*    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-        ins = new AP_InertialSensor_MPU6000(*this);
-        //ins = new AP_InertialSensor_MPU9250(*this);
+    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
+        ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
+        //ins = new AP_InertialSensor_MPU9250(*this, state[instance]);
         hal.console->println("IMU_MPU6000");
     #else
         #error Unrecognised IMU.
@@ -153,7 +157,7 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
         drivers[instance] = ins;
         num_instances++;
     }
-*/
+
     
 }   
 
@@ -162,14 +166,14 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 
     bool success = true;
 
-   
-for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+
+    for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
     if(drivers[i] == NULL)
     detect_instance(i);
-       printf("i: %d\n", i);
+     //  printf("i: %d\n", i);
     //success &= drivers[i]->init(style, sample_rate);
     drivers[i]->init(style, sample_rate);
-}
+    }
 
 
   /****************

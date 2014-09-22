@@ -16,7 +16,7 @@ class AP_InertialSensor_MPU9150 : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_MPU9150(AP_InertialSensor &_imu);
+    AP_InertialSensor_MPU9150(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state);
 
     /* Implementation of AP_InertialSensor functions: */
     bool            _update();

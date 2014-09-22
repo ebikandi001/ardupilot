@@ -13,7 +13,7 @@ class AP_InertialSensor_Oilpan : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_Oilpan(AP_InertialSensor &_imu);
+    AP_InertialSensor_Oilpan(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state);
 
     /* Concrete implementation of AP_InertialSensor functions: */
     bool            _update();

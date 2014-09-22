@@ -10,7 +10,7 @@ class AP_InertialSensor_HIL : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_HIL(AP_InertialSensor &_imu);
+    AP_InertialSensor_HIL(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state);
 
     /* Concrete implementation of AP_InertialSensor functions: */
     bool            _update();
@@ -29,8 +29,8 @@ private:
     uint16_t        _init_sensor( AP_InertialSensor::Sample_rate sample_rate );
     uint32_t         _sample_period_usec;
     uint32_t        _last_sample_usec;
-    uint32_t        _last_accel_usec[INS_MAX_INSTANCES];
-    uint32_t        _last_gyro_usec[INS_MAX_INSTANCES];
+    uint32_t        _last_accel_usec;
+    uint32_t        _last_gyro_usec;
 };
 
 #endif // __AP_INERTIAL_SENSOR_STUB_H__

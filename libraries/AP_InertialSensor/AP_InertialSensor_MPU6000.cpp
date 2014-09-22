@@ -173,8 +173,8 @@ const float AP_InertialSensor_MPU6000::_gyro_scale = (0.0174532f / 16.4f);
  *  variants however
  */
 
-AP_InertialSensor_MPU6000::AP_InertialSensor_MPU6000(AP_InertialSensor &_imu):
-    AP_InertialSensor_Backend(_imu),
+AP_InertialSensor_MPU6000::AP_InertialSensor_MPU6000(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state):
+    AP_InertialSensor_Backend(_imu, _state),
     _drdy_pin(NULL),
     _spi(NULL),
     _spi_sem(NULL),
@@ -272,40 +272,40 @@ bool AP_InertialSensor_MPU6000::_update( void )
         return false;
     }
 
-    imu._previous_accel[0] = imu._accel[0];
+    state._previous_accel  = state._accel;
 
     // disable timer procs for mininum time
     hal.scheduler->suspend_timer_procs();
-    imu._gyro[0]  = Vector3f(_gyro_sum.x, _gyro_sum.y, _gyro_sum.z);
-    imu._accel[0] = Vector3f(_accel_sum.x, _accel_sum.y, _accel_sum.z);
+    state._gyro  = Vector3f(_gyro_sum.x, _gyro_sum.y, _gyro_sum.z);
+    state._accel = Vector3f(_accel_sum.x, _accel_sum.y, _accel_sum.z);
     _num_samples = _sum_count;
     _accel_sum.zero();
     _gyro_sum.zero();
     _sum_count = 0;
     hal.scheduler->resume_timer_procs();
 
-    imu._gyro[0].rotate(imu._board_orientation);
-    imu._gyro[0] *= _gyro_scale / _num_samples;
-    imu._gyro[0] -= imu._gyro_offset[0];
+    state._gyro.rotate(state._board_orientation);
+    state._gyro *= _gyro_scale / _num_samples;
+    state._gyro -= state._gyro_offset;
 
-    imu._accel[0].rotate(imu._board_orientation);
-    imu._accel[0] *= MPU6000_ACCEL_SCALE_1G / _num_samples;
+    state._accel.rotate(state._board_orientation);
+    state._accel *= MPU6000_ACCEL_SCALE_1G / _num_samples;
 
-    Vector3f accel_scale = imu._accel_scale[0].get();
-    imu._accel[0].x *= accel_scale.x;
-    imu._accel[0].y *= accel_scale.y;
-    imu._accel[0].z *= accel_scale.z;
-    imu._accel[0] -= imu._accel_offset[0];
+    Vector3f accel_scale = state._accel_scale.get();
+    state._accel.x *= accel_scale.x;
+    state._accel.y *= accel_scale.y;
+    state._accel.z *= accel_scale.z;
+    state._accel -= state._accel_offset;
 
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-    imu._gyro[0].rotate(ROTATION_PITCH_180_YAW_90);
-    imu._accel[0].rotate(ROTATION_PITCH_180_YAW_90);
+    state._gyro.rotate(ROTATION_PITCH_180_YAW_90);
+    state._accel.rotate(ROTATION_PITCH_180_YAW_90);
 #endif
 
-    if (_last_filter_hz != imu._mpu6000_filter) {
+    if (_last_filter_hz != state._mpu6000_filter) {
         if (_spi_sem->take(10)) {
             _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
-            _set_filter_register(imu._mpu6000_filter, 0);
+            _set_filter_register(state._mpu6000_filter, 0);
             _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_HIGH);
             _error_count = 0;
             _spi_sem->give();
@@ -551,7 +551,7 @@ bool AP_InertialSensor_MPU6000::_hardware_init(AP_InertialSensor::Sample_rate sa
         break;
     }
 
-    _set_filter_register(imu._mpu6000_filter, default_filter);
+    _set_filter_register(state._mpu6000_filter, default_filter);
 
     // set sample rate to 200Hz, and use _sample_divider to give
     // the requested rate to the application

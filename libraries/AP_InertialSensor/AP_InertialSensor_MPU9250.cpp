@@ -171,8 +171,8 @@ extern const AP_HAL::HAL& hal;
  *  variants however
  */
 
-AP_InertialSensor_MPU9250::AP_InertialSensor_MPU9250(AP_InertialSensor &_imu):
-    AP_InertialSensor_Backend(_imu),
+AP_InertialSensor_MPU9250::AP_InertialSensor_MPU9250(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state):
+    AP_InertialSensor_Backend(_imu, _state),
     _initialised(false),
     _mpu9250_product_id(AP_PRODUCT_ID_PIXHAWK_FIRE_CAPE),
     _last_filter_hz(-1),
@@ -297,39 +297,39 @@ bool AP_InertialSensor_MPU9250::_update( void )
         return false;
     }
 
-    imu._previous_accel[0] = imu._accel[0];
+    state._previous_accel = state._accel;
 
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
-    imu._gyro[0]  = _shared_data[idx]._gyro_filtered;
-    imu._accel[0] = _shared_data[idx]._accel_filtered;
+    state._gyro  = _shared_data[idx]._gyro_filtered;
+    state._accel = _shared_data[idx]._accel_filtered;
 
-    imu._gyro[0].rotate(imu._board_orientation);
-    imu._gyro[0] *= GYRO_SCALE;
-    imu._gyro[0] -= imu._gyro_offset[0];
+    state._gyro.rotate(state._board_orientation);
+    state._gyro *= GYRO_SCALE;
+    state._gyro -= state._gyro_offset;
 
-    imu._accel[0].rotate(imu._board_orientation);
-    imu._accel[0] *= MPU9250_ACCEL_SCALE_1G;
+    state._accel.rotate(state._board_orientation);
+    state._accel *= MPU9250_ACCEL_SCALE_1G;
 
     // rotate for bbone default
-    imu._accel[0].rotate(ROTATION_ROLL_180_YAW_90);
-    imu._gyro[0].rotate(ROTATION_ROLL_180_YAW_90);
+    state._accel.rotate(ROTATION_ROLL_180_YAW_90);
+    state._gyro.rotate(ROTATION_ROLL_180_YAW_90);
 
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
     // PXF has an additional YAW 180
-    imu._accel[0].rotate(ROTATION_YAW_180);
-    imu._gyro[0].rotate(ROTATION_YAW_180);
+    state._accel.rotate(ROTATION_YAW_180);
+    state._gyro.rotate(ROTATION_YAW_180);
 #endif
 
-    Vector3f accel_scale = imu._accel_scale[0].get();
-    imu._accel[0].x *= accel_scale.x;
-    imu._accel[0].y *= accel_scale.y;
-    imu._accel[0].z *= accel_scale.z;
-    imu._accel[0] -= imu._accel_offset[0];
+    Vector3f accel_scale = state._accel_scale.get();
+    state._accel.x *= accel_scale.x;
+    state._accel.y *= accel_scale.y;
+    state._accel.z *= accel_scale.z;
+    state._accel -= state._accel_offset;
 
-    if (_last_filter_hz != imu._mpu6000_filter) {
-        _set_filter(imu._mpu6000_filter);
-        _last_filter_hz = imu._mpu6000_filter;
+    if (_last_filter_hz != state._mpu6000_filter) {
+        _set_filter(state._mpu6000_filter);
+        _last_filter_hz = state._mpu6000_filter;
     }
 
     _have_sample_available = false;

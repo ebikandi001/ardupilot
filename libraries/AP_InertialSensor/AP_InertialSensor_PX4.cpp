@@ -17,8 +17,8 @@ const extern AP_HAL::HAL& hal;
 
 #include <AP_Notify.h>
 
-AP_InertialSensor_PX4::AP_InertialSensor_PX4(AP_InertialSensor &_imu) : 
-    AP_InertialSensor_Backend(_imu),
+AP_InertialSensor_PX4::AP_InertialSensor_PX4(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state):
+    AP_InertialSensor_Backend(_imu, _state),
     _last_get_sample_timestamp(0),
     _sample_time_usec(0)
 {
@@ -27,16 +27,16 @@ AP_InertialSensor_PX4::AP_InertialSensor_PX4(AP_InertialSensor &_imu) :
 uint16_t AP_InertialSensor_PX4::_init_sensor( AP_InertialSensor::Sample_rate sample_rate ) 
 {
     // assumes max 2 instances
-    _accel_fd[0] = open(ACCEL_DEVICE_PATH, O_RDONLY);
-    _accel_fd[1] = open(ACCEL_DEVICE_PATH "1", O_RDONLY);
-    _accel_fd[2] = open(ACCEL_DEVICE_PATH "2", O_RDONLY);
-    _gyro_fd[0] = open(GYRO_DEVICE_PATH, O_RDONLY);
-    _gyro_fd[1] = open(GYRO_DEVICE_PATH "1", O_RDONLY);
-    _gyro_fd[2] = open(GYRO_DEVICE_PATH "2", O_RDONLY);
+    _accel_fd = open(ACCEL_DEVICE_PATH, O_RDONLY);
+    //_accel_fd[1] = open(ACCEL_DEVICE_PATH "1", O_RDONLY);
+    //_accel_fd[2] = open(ACCEL_DEVICE_PATH "2", O_RDONLY);
+    _gyro_fd = open(GYRO_DEVICE_PATH, O_RDONLY);
+    //_gyro_fd[1] = open(GYRO_DEVICE_PATH "1", O_RDONLY);
+    //_gyro_fd[2] = open(GYRO_DEVICE_PATH "2", O_RDONLY);
 
-    _num_accel_instances = 0;
-    _num_gyro_instances = 0;
-    for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+    _num_accel_instances = 1;// 0;
+    _num_gyro_instances = 1;// 0;
+    /*for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
         if (_accel_fd[i] >= 0) {
             _num_accel_instances = i+1;
         }
@@ -49,7 +49,7 @@ uint16_t AP_InertialSensor_PX4::_init_sensor( AP_InertialSensor::Sample_rate sam
     }
 	if (_num_gyro_instances == 0) {
         hal.scheduler->panic("Unable to open gyro device " GYRO_DEVICE_PATH);
-    }
+    }*/
 
     switch (sample_rate) {
     case AP_InertialSensor::RATE_50HZ:
@@ -71,7 +71,7 @@ uint16_t AP_InertialSensor_PX4::_init_sensor( AP_InertialSensor::Sample_rate sam
         break;
     }
 
-    _set_filter_frequency(imu._mpu6000_filter);
+    _set_filter_frequency(state._mpu6000_filter);
 
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
     return AP_PRODUCT_ID_PX4_V2;
@@ -88,12 +88,12 @@ void AP_InertialSensor_PX4::_set_filter_frequency(uint8_t filter_hz)
     if (filter_hz == 0) {
         filter_hz = _default_filter_hz;
     }
-    for (uint8_t i=0; i<_num_gyro_instances; i++) {
-        ioctl(_gyro_fd[i],  GYROIOCSLOWPASS,  filter_hz);
-    }
-    for (uint8_t i=0; i<_num_accel_instances; i++) {
-        ioctl(_accel_fd[i], ACCELIOCSLOWPASS, filter_hz);
-    }
+    //for (uint8_t i=0; i<_num_gyro_instances; i++) {
+        ioctl(_gyro_fd,  GYROIOCSLOWPASS,  filter_hz);
+    //}
+    //for (uint8_t i=0; i<_num_accel_instances; i++) {
+        ioctl(_accel_fd, ACCELIOCSLOWPASS, filter_hz);
+    //}
 }
 
 /*================ AP_INERTIALSENSOR PUBLIC INTERFACE ==================== */
@@ -124,6 +124,7 @@ uint8_t AP_InertialSensor_PX4::get_gyro_count(void) const
 
 bool AP_InertialSensor_PX4::get_accel_health(uint8_t k) const
 {
+    //TODO erase parameter K
     if (_sample_time_usec == 0 || _last_get_sample_timestamp == 0) {
         // not initialised yet, show as healthy to prevent scary GCS
         // warnings
@@ -137,8 +138,8 @@ bool AP_InertialSensor_PX4::get_accel_health(uint8_t k) const
         // accels have not updated
         return false;
     }
-    if (fabsf(imu._accel[k].x) > 30 && fabsf(imu._accel[k].y) > 30 && fabsf(imu._accel[k].z) > 30 &&
-        (imu._previous_accel[k] - imu._accel[k]).length() < 0.01f) {
+    if (fabsf(state._accel.x) > 30 && fabsf(state._accel.y) > 30 && fabsf(state._accel.z) > 30 &&
+        (state._previous_accel - state._accel).length() < 0.01f) {
         // unchanging accel, large in all 3 axes. This is a likely
         // accelerometer failure of the LSM303d
         return false;
@@ -162,25 +163,25 @@ bool AP_InertialSensor_PX4::_update(void)
     _get_sample();
 
 
-    for (uint8_t k=0; k<_num_accel_instances; k++) {
-        imu._previous_accel[k] = imu._accel[k];
-        imu._accel[k] = _accel_in[k];
-        imu._accel[k].rotate(imu._board_orientation);
-        imu._accel[k].x *= imu._accel_scale[k].get().x;
-        imu._accel[k].y *= imu._accel_scale[k].get().y;
-        imu._accel[k].z *= imu._accel_scale[k].get().z;
-        imu._accel[k]   -= imu._accel_offset[k];
-    }
+    //for (uint8_t k=0; k<_num_accel_instances; k++) {
+        state._previous_accel = state._accel;
+        state._accel = _accel_in;
+        state._accel.rotate(state._board_orientation);
+        state._accel.x *= state._accel_scale.get().x;
+        state._accel.y *= state._accel_scale.get().y;
+        state._accel.z *= state._accel_scale.get().z;
+        state._accel   -= state._accel_offset;
+    //}
 
-    for (uint8_t k=0; k<_num_gyro_instances; k++) {
-        imu._gyro[k] = _gyro_in[k];
-        imu._gyro[k].rotate(imu._board_orientation);
-        imu._gyro[k] -= imu._gyro_offset[k];
-    }
+    //for (uint8_t k=0; k<_num_gyro_instances; k++) {
+        state._gyro = _gyro_in;
+        state._gyro.rotate(state._board_orientation);
+        state._gyro -= state._gyro_offset[k];
+    //}
 
-    if (_last_filter_hz != imu._mpu6000_filter) {
-        _set_filter_frequency(imu._mpu6000_filter);
-        _last_filter_hz = imu._mpu6000_filter;
+    if (_last_filter_hz != state._mpu6000_filter) {
+        _set_filter_frequency(state._mpu6000_filter);
+        _last_filter_hz = state._mpu6000_filter;
     }
 
     _have_sample_available = false;
@@ -201,24 +202,24 @@ float AP_InertialSensor_PX4::get_gyro_drift_rate(void)
 
 void AP_InertialSensor_PX4::_get_sample(void)
 {
-    for (uint8_t i=0; i<_num_accel_instances; i++) {
+   // for (uint8_t i=0; i<_num_accel_instances; i++) {
         struct accel_report	accel_report;
-        while (_accel_fd[i] != -1 && 
-               ::read(_accel_fd[i], &accel_report, sizeof(accel_report)) == sizeof(accel_report) &&
-               accel_report.timestamp != _last_accel_timestamp[i]) {        
-            _accel_in[i] = Vector3f(accel_report.x, accel_report.y, accel_report.z);
-            _last_accel_timestamp[i] = accel_report.timestamp;
+        while (_accel_fd != -1 && 
+               ::read(_accel_fd, &accel_report, sizeof(accel_report)) == sizeof(accel_report) &&
+               accel_report.timestamp != _last_accel_timestamp) {        
+            _accel_in = Vector3f(accel_report.x, accel_report.y, accel_report.z);
+            _last_accel_timestamp = accel_report.timestamp;
         }
-    }
-    for (uint8_t i=0; i<_num_gyro_instances; i++) {
+    //}
+    //for (uint8_t i=0; i<_num_gyro_instances; i++) {
         struct gyro_report	gyro_report;
-        while (_gyro_fd[i] != -1 && 
-               ::read(_gyro_fd[i], &gyro_report, sizeof(gyro_report)) == sizeof(gyro_report) &&
-               gyro_report.timestamp != _last_gyro_timestamp[i]) {        
-            _gyro_in[i] = Vector3f(gyro_report.x, gyro_report.y, gyro_report.z);
-            _last_gyro_timestamp[i] = gyro_report.timestamp;
+        while (_gyro_fd != -1 && 
+               ::read(_gyro_fd, &gyro_report, sizeof(gyro_report)) == sizeof(gyro_report) &&
+               gyro_report.timestamp != _last_gyro_timestamp) {        
+            _gyro_in = Vector3f(gyro_report.x, gyro_report.y, gyro_report.z);
+            _last_gyro_timestamp = gyro_report.timestamp;
         }
-    }
+    //}
     _last_get_sample_timestamp = hal.scheduler->micros64();
 }
 

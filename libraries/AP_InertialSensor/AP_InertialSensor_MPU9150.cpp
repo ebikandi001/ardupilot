@@ -320,8 +320,8 @@ static struct gyro_state_s st = {
 /**
  *  @brief      Constructor
  */
-AP_InertialSensor_MPU9150::AP_InertialSensor_MPU9150(AP_InertialSensor &_imu):
-    AP_InertialSensor_Backend(_imu),
+AP_InertialSensor_MPU9150::AP_InertialSensor_MPU9150(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state):
+    AP_InertialSensor_Backend(_imu, _state),
     _accel_filter_x(800, 10),
     _accel_filter_y(800, 10),
     _accel_filter_z(800, 10),
@@ -467,7 +467,7 @@ uint16_t AP_InertialSensor_MPU9150::_init_sensor( AP_InertialSensor::Sample_rate
     mpu_set_sensors(sensors);
 
     // Set the filter frecuency (_mpu6000_filter configured to the default value, check AP_InertialSensor.cpp)
-    _set_filter_frequency(imu._mpu6000_filter);
+    _set_filter_frequency(state._mpu6000_filter);
 
     // give back i2c semaphore
     i2c_sem->give();
@@ -1137,40 +1137,40 @@ bool AP_InertialSensor_MPU9150::_update(void)
     if (!wait_for_sample(1000)) {
         return false;
     }
-    Vector3f accel_scale = imu._accel_scale[0].get();
+    Vector3f accel_scale = state._accel_scale.get();
 
-    imu._previous_accel[0] = imu._accel[0];
+    state._previous_accel = state._accel;
 
     // hal.scheduler->suspend_timer_procs();
-    imu._accel[0] = _accel_filtered;
-    imu._gyro[0] = _gyro_filtered;
+    state._accel = _accel_filtered;
+    state._gyro = _gyro_filtered;
     // hal.scheduler->resume_timer_procs();
 
     // add offsets and rotation
-    imu._accel[0].rotate(imu._board_orientation);
+    state._accel.rotate(state._board_orientation);
 
     // Adjust for chip scaling to get m/s/s
     ////////////////////////////////////////////////
-    imu._accel[0] *= MPU9150_ACCEL_SCALE_2G/_gyro_samples_available;
+    state._accel *= MPU9150_ACCEL_SCALE_2G/_gyro_samples_available;
 
     // Now the calibration scale factor
-    imu._accel[0].x *= accel_scale.x;
-    imu._accel[0].y *= accel_scale.y;
-    imu._accel[0].z *= accel_scale.z;
-    imu._accel[0]   -= imu._accel_offset[0];
+    state._accel.x *= accel_scale.x;
+    state._accel.y *= accel_scale.y;
+    state._accel.z *= accel_scale.z;
+    state._accel   -= state._accel_offset;
 
-    imu._gyro[0].rotate(imu._board_orientation);
+    state._gyro.rotate(state._board_orientation);
 
     // Adjust for chip scaling to get radians/sec
-    imu._gyro[0] *= MPU9150_GYRO_SCALE_2000 / _gyro_samples_available;
-    imu._gyro[0] -= imu._gyro_offset[0];
+    state._gyro *= MPU9150_GYRO_SCALE_2000 / _gyro_samples_available;
+    state._gyro -= state._gyro_offset;
     ////////////////////////////////////////////////
 
     _gyro_samples_available = 0;
 
-    if (_last_filter_hz != imu._mpu6000_filter) {
-        _set_filter_frequency(imu._mpu6000_filter);
-        _last_filter_hz = imu._mpu6000_filter;
+    if (_last_filter_hz != state._mpu6000_filter) {
+        _set_filter_frequency(state._mpu6000_filter);
+        _last_filter_hz = state._mpu6000_filter;
     }
 
     _have_sample_available = false;

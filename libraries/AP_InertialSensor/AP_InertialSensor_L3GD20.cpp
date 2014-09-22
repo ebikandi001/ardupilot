@@ -148,8 +148,8 @@ extern const AP_HAL::HAL& hal;
 // const float AP_InertialSensor_L3GD20::_gyro_scale = (0.0174532f / 16.4f);
 
 
-AP_InertialSensor_L3GD20::AP_InertialSensor_L3GD20(AP_InertialSensor &_imu):
-    AP_InertialSensor_Backend(_imu),
+AP_InertialSensor_L3GD20::AP_InertialSensor_L3GD20(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state):
+    AP_InertialSensor_Backend(_imu, _state),
     _drdy_pin(NULL),
     _initialised(false),
     _L3GD20_product_id(AP_PRODUCT_ID_NONE)
@@ -250,15 +250,15 @@ bool AP_InertialSensor_L3GD20::_update( void )
 
     // disable timer procs for mininum time
     hal.scheduler->suspend_timer_procs();
-    imu._gyro[0]  = Vector3f(_gyro_sum.x, _gyro_sum.y, _gyro_sum.z);
+    state._gyro  = Vector3f(_gyro_sum.x, _gyro_sum.y, _gyro_sum.z);
     _num_samples = _sum_count;
     _gyro_sum.zero();
     _sum_count = 0;
     hal.scheduler->resume_timer_procs();
 
-    imu._gyro[0].rotate(imu._board_orientation);
-    imu._gyro[0] *= _gyro_scale / _num_samples;
-    imu._gyro[0] -= imu._gyro_offset[0];
+    state._gyro.rotate(state._board_orientation);
+    state._gyro *= _gyro_scale / _num_samples;
+    state._gyro -= state._gyro_offset;
 
     // if (_last_filter_hz != _L3GD20_filter) {
     //     if (_spi_sem->take(10)) {

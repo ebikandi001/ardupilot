@@ -17,7 +17,7 @@ class AP_InertialSensor_PX4 : public AP_InertialSensor_Backend
 {
 public:
 
-    AP_InertialSensor_PX4(AP_InertialSensor &_imu); 
+    AP_InertialSensor_PX4(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state); 
 
     /* Concrete implementation of AP_InertialSensor functions: */
     bool            _update();
@@ -41,10 +41,10 @@ private:
     uint16_t _init_sensor( AP_InertialSensor::Sample_rate sample_rate );
     void     _get_sample(void);
     bool     _sample_available(void);
-    Vector3f _accel_in[INS_MAX_INSTANCES];
-    Vector3f _gyro_in[INS_MAX_INSTANCES];
-    uint64_t _last_accel_timestamp[INS_MAX_INSTANCES];
-    uint64_t _last_gyro_timestamp[INS_MAX_INSTANCES];
+    Vector3f _accel_in;
+    Vector3f _gyro_in;
+    uint64_t _last_accel_timestamp;
+    uint64_t _last_gyro_timestamp;
     uint64_t _last_get_sample_timestamp;
     uint64_t _last_sample_timestamp;
     uint32_t _sample_time_usec;
@@ -59,8 +59,8 @@ private:
     // accelerometer and gyro driver handles
     uint8_t _num_accel_instances;
     uint8_t _num_gyro_instances;
-    int _accel_fd[INS_MAX_INSTANCES];
-    int _gyro_fd[INS_MAX_INSTANCES];
+    int _accel_fd;
+    int _gyro_fd;
 };
 #endif
 #endif // __AP_INERTIAL_SENSOR_PX4_H__
