@@ -21,7 +21,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: Which type of IMU is installed (read-only). 
     // @User: Advanced
     // @Values: 0:Unknown,1:APM1-1280,2:APM1-2560,88:APM2,3:SITL,4:PX4v1,5:PX4v2,256:Flymaple,257:Linux
-    AP_GROUPINFO("PRODUCT_ID",  0, AP_InertialSensor, _product_id,   0),
+    AP_GROUPINFO("PRODUCT_ID",  0, AP_InertialSensor, state[0]._product_id,   0),
 
     // @Param: ACCSCAL_X
     // @DisplayName: Accelerometer scaling of X axis
@@ -40,7 +40,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: Accelerometer scaling of Z axis  Calculated during acceleration calibration routine
     // @Range: 0.8 1.2
     // @User: Advanced
-    AP_GROUPINFO("ACCSCAL",     1, AP_InertialSensor, _accel_scale[0],  0),
+    AP_GROUPINFO("ACCSCAL",     1, AP_InertialSensor,  state[0]._accel_scale,  0),
 
     // @Param: ACCOFFS_X
     // @DisplayName: Accelerometer offsets of X axis
@@ -62,7 +62,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Units: m/s/s
     // @Range: -300 300
     // @User: Advanced
-    AP_GROUPINFO("ACCOFFS",     2, AP_InertialSensor, _accel_offset[0], 0),
+    AP_GROUPINFO("ACCOFFS",     2, AP_InertialSensor,  state[0]._accel_offset, 0),
 
     // @Param: GYROFFS_X
     // @DisplayName: Gyro offsets of X axis
@@ -81,7 +81,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations
     // @Units: rad/s
     // @User: Advanced
-    AP_GROUPINFO("GYROFFS",     3, AP_InertialSensor, _gyro_offset[0],  0),
+    AP_GROUPINFO("GYROFFS",     3, AP_InertialSensor,  state[0]._gyro_offset,  0),
 
     // @Param: MPU6K_FILTER
     // @DisplayName: MPU6000 filter frequency
@@ -89,18 +89,18 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Units: Hz
     // @Values: 0:Default,5:5Hz,10:10Hz,20:20Hz,42:42Hz,98:98Hz
     // @User: Advanced
-    AP_GROUPINFO("MPU6K_FILTER", 4, AP_InertialSensor, _mpu6000_filter,  0),
+    AP_GROUPINFO("MPU6K_FILTER", 4, AP_InertialSensor,  state[0]._mpu6000_filter,  0),
 
 #if INS_MAX_INSTANCES > 1
-    AP_GROUPINFO("ACC2SCAL",    5, AP_InertialSensor, _accel_scale[1],   0),
-    AP_GROUPINFO("ACC2OFFS",    6, AP_InertialSensor, _accel_offset[1],  0),
-    AP_GROUPINFO("GYR2OFFS",    7, AP_InertialSensor, _gyro_offset[1],   0),
+    AP_GROUPINFO("ACC2SCAL",    5, AP_InertialSensor,  state[1]._accel_scale,   0),
+    AP_GROUPINFO("ACC2OFFS",    6, AP_InertialSensor, state[1]._accel_offset,  0),
+    AP_GROUPINFO("GYR2OFFS",    7, AP_InertialSensor, state[1]._gyro_offset,   0),
 #endif
 
 #if INS_MAX_INSTANCES > 2
-    AP_GROUPINFO("ACC3SCAL",    8, AP_InertialSensor, _accel_scale[2],   0),
-    AP_GROUPINFO("ACC3OFFS",    9, AP_InertialSensor, _accel_offset[2],  0),
-    AP_GROUPINFO("GYR3OFFS",   10, AP_InertialSensor, _gyro_offset[2],   0),
+    AP_GROUPINFO("ACC3SCAL",    8, AP_InertialSensor, state[2]._accel_scale,   0),
+    AP_GROUPINFO("ACC3OFFS",    9, AP_InertialSensor, state[2]._accel_offset,  0),
+    AP_GROUPINFO("GYR3OFFS",   10, AP_InertialSensor, state[2]._gyro_offset,   0),
 #endif
 
     AP_GROUPEND
@@ -117,8 +117,8 @@ AP_InertialSensor::AP_InertialSensor():
 }
 */
 void AP_InertialSensor::detect_instance(uint8_t instance)
-{   
-    AP_InertialSensor_Backend *ins = NULL;
+{   //TODO state objetu bat sortu
+   /* AP_InertialSensor_Backend *ins = NULL;
     #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
         ins = new AP_InertialSensor_MPU6000(*this);
         hal.console->println("IMU_MPU6000");
@@ -141,16 +141,19 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
         ins = new AP_InertialSensor_L3G4200D(*this);
         hal.console->println("IMU_L3G4200D");
         printf("L3G4200D \n");  */  
-    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-        ins = new AP_InertialSensor_MPU9250(*this);
-        hal.console->println("IMU_MPU9250");
+/*    #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
+        ins = new AP_InertialSensor_MPU6000(*this);
+        //ins = new AP_InertialSensor_MPU9250(*this);
+        hal.console->println("IMU_MPU6000");
     #else
         #error Unrecognised IMU.
     #endif
 
-    if(ins != NULL)
+    if(ins != NULL){
         drivers[instance] = ins;
-
+        num_instances++;
+    }
+*/
     
 }   
 
@@ -159,7 +162,7 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 
     bool success = true;
 
-  /*  
+   
 for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
     if(drivers[i] == NULL)
     detect_instance(i);
@@ -168,23 +171,26 @@ for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
     drivers[i]->init(style, sample_rate);
 }
 
-*/
+
   /****************
     MULTIPLE IMU TEST WITH HIL DRIVER
-    ***************/
+    ***************
 
-    for (uint8_t i=0; i<INS_MAX_INSTANCES-1; i++) {
-        if(drivers[i] == NULL)
-            detect_instance(i);
-               printf("i: %d\n", i);
+
+    AP_InertialSensor_Backend *ins;
+    ins = new AP_InertialSensor_MPU9250(*this);
+        drivers[0] = ins;
+        drivers[0]->init(COLD_START, sample_rate);
+        num_instances++;
+    for (uint8_t i=1; i<INS_MAX_INSTANCES; i++) {
+        ins = new AP_InertialSensor_MPU6000(*this);
+        drivers[i] = ins;
+        drivers[i]->init(COLD_START, sample_rate);
+        hal.console->println("IMU_MPU6000");
+        num_instances++;
         //success &= drivers[i]->init(style, sample_rate);
-        drivers[i]->init(style, sample_rate);
     }
-    //Dumb driver
-    AP_InertialSensor_Backend *ins = new AP_InertialSensor_HIL(*this);
-    drivers[INS_MAX_INSTANCES-1] = ins;
-    drivers[INS_MAX_INSTANCES-1]->init(COLD_START, sample_rate);
-    hal.console->println("IMU_HIL");
+    
 /******     end test initialization ****************/
     
     //TODO check return statement on drivers[i]->init();**/
@@ -226,7 +232,6 @@ bool AP_InertialSensor::update()
             detect_instance(i);
         }
         else{
-            num_instances = i+1;
             success &= drivers[i]->_update();
         }
     }
@@ -239,11 +244,12 @@ bool AP_InertialSensor::update()
 // save parameters to eeprom
 void AP_InertialSensor::_save_parameters()
 {
-    _product_id.save();
+
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-        _accel_scale[i].save();
-        _accel_offset[i].save();
-        _gyro_offset[i].save();
+        state[i]._product_id.save();
+        state[i]._accel_scale.save();
+        state[i]._accel_offset.save();
+        state[i]._gyro_offset.save();
     }
 }
 
@@ -271,12 +277,12 @@ bool AP_InertialSensor::calibrate_accel(AP_InertialSensor_UserInteract* interact
 
     for (uint8_t k=0; k<num_accels; k++) {
         // backup original offsets and scaling
-        orig_offset[k] = _accel_offset[k].get();
-        orig_scale[k]  = _accel_scale[k].get();
+        orig_offset[k] = state[k]._accel_offset.get();
+        orig_scale[k]  = state[k]._accel_scale.get();
 
         // clear accelerometer offsets and scaling
-        _accel_offset[k] = Vector3f(0,0,0);
-        _accel_scale[k] = Vector3f(1,1,1);
+        state[k]._accel_offset = Vector3f(0,0,0);
+        state[k]._accel_scale = Vector3f(1,1,1);
     }
 
     // capture data from 6 positions
@@ -359,8 +365,8 @@ bool AP_InertialSensor::calibrate_accel(AP_InertialSensor_UserInteract* interact
 
         for (uint8_t k=0; k<num_accels; k++) {
             // set and save calibration
-            _accel_offset[k].set(new_offsets[k]);
-            _accel_scale[k].set(new_scaling[k]);
+            state[k]._accel_offset.set(new_offsets[k]);
+            state[k]._accel_scale.set(new_scaling[k]);
         }
         _save_parameters();
 
@@ -374,8 +380,8 @@ failed:
     interact->printf_P(PSTR("Calibration FAILED\n"));
     // restore original scaling and offsets
     for (uint8_t k=0; k<num_accels; k++) {
-        _accel_offset[k].set(orig_offset[k]);
-        _accel_scale[k].set(orig_scale[k]);
+        state[k]._accel_offset.set(orig_offset[k]);
+        state[k]._accel_scale.set(orig_scale[k]);
     }
     return false;
 }
@@ -386,7 +392,7 @@ bool AP_InertialSensor::calibrated()
 {
     // check each accelerometer has offsets saved
     for (uint8_t i=0; i<get_accel_count(); i++) {
-        if (!_accel_offset[i].load()) {
+        if (!state[i]._accel_offset.load()) {
             return false;
         }
     }
@@ -543,9 +549,9 @@ void AP_InertialSensor::_calibrate_find_delta(float dS[6], float JS[6][6], float
 // _calculate_trim  - calculates the x and y trim angles (in radians) given a raw accel sample (i.e. no scaling or offsets applied) taken when the vehicle was level
 void AP_InertialSensor::_calculate_trim(Vector3f accel_sample, float& trim_roll, float& trim_pitch)
 {
-    // scale sample and apply offsets
-    Vector3f accel_scale = _accel_scale[0].get();
-    Vector3f accel_offsets = _accel_offset[0].get();
+    // scale sample and apply offsets //TODO check all instances (all states)
+    Vector3f accel_scale = state[0]._accel_scale.get();
+    Vector3f accel_offsets = state[0]._accel_offset.get();
     Vector3f scaled_accels_x( accel_sample.x * accel_scale.x - accel_offsets.x,
                               0,
                               accel_sample.z * accel_scale.z - accel_offsets.z );
@@ -580,6 +586,64 @@ float AP_InertialSensor::get_delta_time() const
 float AP_InertialSensor::get_gyro_drift_rate(void)
 {
 	return drivers[primary_instance]->get_gyro_drift_rate(); 
+}
+
+
+void AP_InertialSensor::_print_all_accels()
+{
+    Vector3f accel;
+          
+    for(uint8_t i=0; i<num_instances; i++)
+    {
+        accel=state[i]._accel;
+        hal.console->printf_P(PSTR("Sensor number: %d \nAccel X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
+			              		                             i, accel.x, accel.y, accel.z);
+    }
+
+}
+
+const Vector3f  AP_InertialSensor::get_gyro(uint8_t i) const 
+{ 
+    return state[i]._gyro; 
+}
+
+const Vector3f AP_InertialSensor::get_gyro_offsets(uint8_t i) const 
+{ 
+    return state[i]._gyro_offset; 
+}
+
+const Vector3f AP_InertialSensor::get_accel(uint8_t i) const 
+{  
+    return state[i]._accel; 
+}
+
+const Vector3f AP_InertialSensor::get_accel_offsets(uint8_t i) const 
+{ 
+    return state[i]._accel_offset; 
+}
+
+const Vector3f AP_InertialSensor::get_accel_scale(uint8_t i) const 
+{ 
+    return state[i]._accel_scale; 
+}
+
+const AP_Int16 AP_InertialSensor::get_product_id(uint8_t i) const 
+{  
+    return state[i]._product_id;      
+}
+
+// override default filter frequency //TODO check state-index
+void AP_InertialSensor::set_default_filter(float filter_hz) {
+    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++){
+        if (!state[i]._mpu6000_filter.load()) {
+            state[i]._mpu6000_filter.set(filter_hz);
+        }
+    }
+}
+
+uint8_t AP_InertialSensor::get_filter() const 
+{ 
+    return state[0]._mpu6000_filter.get(); 
 }
 #endif // __AVR_ATmega1280__
 

@@ -28,7 +28,7 @@ void
 AP_InertialSensor_Backend::init( AP_InertialSensor::Start_style style,
                          AP_InertialSensor::Sample_rate sample_rate)
 {
-    imu._product_id = _init_sensor(sample_rate);
+/*    imu._product_id = _init_sensor(sample_rate);
 
     // check scaling
     for (uint8_t i=0; i<imu.get_accel_count(); i++) {
@@ -40,23 +40,15 @@ AP_InertialSensor_Backend::init( AP_InertialSensor::Start_style style,
     if (AP_InertialSensor::WARM_START != style) {
         // do cold-start calibration for gyro only
         init_gyro();
-    }
+    }*/
 }
 
-/*
-void
-AP_InertialSensor_Backend::init_gyro()
-{
-    _init_gyro();
 
-    // save calibration
-    _save_parameters();
-}*/
 
 void
 AP_InertialSensor_Backend::init_gyro()
 {
-    uint8_t num_gyros = min(imu.get_gyro_count(), INS_MAX_INSTANCES);
+   /* uint8_t num_gyros = min(imu.get_gyro_count(), INS_MAX_INSTANCES);
     Vector3f last_average[INS_MAX_INSTANCES], best_avg[INS_MAX_INSTANCES];
     float best_diff[INS_MAX_INSTANCES];
     bool converged[INS_MAX_INSTANCES];
@@ -151,23 +143,15 @@ AP_InertialSensor_Backend::init_gyro()
         }
     }
      
-    imu._save_parameters();
+    imu._save_parameters();*/
 }
 
-/*
-void
-AP_InertialSensor_Backend::init_accel()
-{
-    _init_accel();
 
-    // save calibration
-    _save_parameters();
-}*/
 
 void
 AP_InertialSensor_Backend::init_accel()
 {
-    uint8_t num_accels = min(imu.get_accel_count(), INS_MAX_INSTANCES);
+  /*  uint8_t num_accels = min(imu.get_accel_count(), INS_MAX_INSTANCES);
     uint8_t flashcount = 0;
     Vector3f prev[INS_MAX_INSTANCES];
     Vector3f accel_offset[INS_MAX_INSTANCES];
@@ -261,6 +245,16 @@ AP_InertialSensor_Backend::init_accel()
     // stop flashing the leds
     AP_Notify::flags.initialising = false;
 
-    hal.console->print_P(PSTR(" "));
+    hal.console->print_P(PSTR(" "));*/
 
+}
+
+AP_Int16 AP_InertialSensor_Backend::get_product_id() const
+{
+    //return imu._product_id;
+}
+
+Vector3f AP_InertialSensor_Backend::get_accel() const
+{
+   //return imu.get_accel();
 }

@@ -84,6 +84,11 @@ public:
     // wait for a sample to be available, with timeout in milliseconds
     virtual bool wait_for_sample(uint16_t timeout_ms) = 0;
 
+    virtual AP_Int16 get_product_id() const;
+
+    //Gets the primary accelerator value
+    virtual Vector3f get_accel() const;
+
 #if !defined( __AVR_ATmega1280__ )
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/
@@ -101,6 +106,7 @@ protected:
     //TODO "port" object to encapsulate the bus driver
     //AP_HAL::SPIDeviceDriver *port;                          ///< SPI we are attached to
     AP_InertialSensor &imu;                                 ///< access to frontend (for parameters)
+    //TODO state objetua
 };
 
 #endif // __AP_INERTIALSENSOR_BACKEND_H__

@@ -183,35 +183,31 @@ void run_test()
     Vector3f gyro;
     float length;
 	uint8_t counter = 0;
-
+   
     // flush any user input
     while( hal.console->available() ) {
         hal.console->read();
     }
-
     // clear out any existing samples from ins
     ins.update();
-
     // loop as long as user does not press a key
     while( !hal.console->available() ) {
 
         // wait until we have a sample
         ins.wait_for_sample(1000);
         ins.update();
-        
+
         uint8_t num_sensors = ins.get_num_sensors();
         for(uint8_t i=0; i<num_sensors; i++){
-        // read samples from ins
-
-            accel = ins.get_accel(i);
-            gyro = ins.get_gyro(i);
+            // read samples from ins
+            accel = ins.get_accel(0);
+            gyro = ins.get_gyro(0);
 
             length = accel.length();
-
 	        if (counter++ % 50 == 0) {
 		        // display results
 		        hal.console->printf_P(PSTR("Sensor number: %d \nAccel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
-							          i, accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
+			              		                             i, accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
 	        }
         }
         

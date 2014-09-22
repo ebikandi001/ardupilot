@@ -36,10 +36,10 @@ class AP_InertialSensor_Backend;
 class AP_InertialSensor
 {
 public:
-    AP_InertialSensor():
-    _accel(),
-    _gyro(),
-    _board_orientation(ROTATION_NONE)
+    AP_InertialSensor()//:
+    //_accel(),
+    //_gyro(),
+    //_board_orientation(ROTATION_NONE)
 {
     AP_Param::setup_object_defaults(this, var_info);  
     primary_instance = 0;      
@@ -57,6 +57,32 @@ public:
         RATE_100HZ,
         RATE_200HZ,
         RATE_400HZ
+    };
+
+    //The IMU_State structure is filled in by the backend driver
+    struct IMU_State {
+        // Most recent accelerometer reading obtained by ::_update
+        Vector3f _accel;
+
+        // previous accelerometer reading obtained by ::_update
+        Vector3f _previous_accel;
+
+        // Most recent gyro reading obtained by ::_update
+        Vector3f _gyro;
+
+        // product id
+        AP_Int16 _product_id;
+
+        // accelerometer scaling and offsets
+        AP_Vector3f             _accel_scale;
+        AP_Vector3f             _accel_offset;
+        AP_Vector3f             _gyro_offset;
+
+        // filtering frequency (0 means default)
+        AP_Int8                 _mpu6000_filter;
+
+        // board orientation from AHRS
+        enum Rotation     _board_orientation;
     };
 
 #if !defined( __AVR_ATmega1280__ )
@@ -106,19 +132,19 @@ public:
     ///
     /// @returns	vector of rotational rates in radians/sec
     ///
-    const Vector3f     &get_gyro(uint8_t i) const { return _gyro[i]; }
+    const Vector3f     get_gyro(uint8_t i) const;
     const Vector3f     &get_gyro(void) const { return get_gyro(_get_primary_gyro()); }
     void       set_gyro(uint8_t instance, const Vector3f &gyro) {}
 
     // set gyro offsets in radians/sec
-    const Vector3f &get_gyro_offsets(uint8_t i) const { return _gyro_offset[i]; }
+    const Vector3f get_gyro_offsets(uint8_t i) const;
     const Vector3f &get_gyro_offsets(void) const { return get_gyro_offsets(_get_primary_gyro()); }
 
     /// Fetch the current accelerometer values
     ///
     /// @returns	vector of current accelerations in m/s/s
     ///
-    const Vector3f     &get_accel(uint8_t i) const { return _accel[i]; }
+    const Vector3f     get_accel(uint8_t i) const;
     const Vector3f     &get_accel(void) const { return get_accel(get_primary_accel()); }
     void       set_accel(uint8_t instance, const Vector3f &accel) {}
 
@@ -132,30 +158,30 @@ public:
     uint8_t get_accel_count(void) const { return 1; };
 
     // get accel offsets in m/s/s
-    const Vector3f &get_accel_offsets(uint8_t i) const { return _accel_offset[i]; }
+    const Vector3f get_accel_offsets(uint8_t i) const;
     const Vector3f &get_accel_offsets(void) const { return get_accel_offsets(get_primary_accel()); }
 
     // get accel scale
-    const Vector3f &get_accel_scale(uint8_t i) const { return _accel_scale[i]; }
+    const Vector3f get_accel_scale(uint8_t i) const;
     const Vector3f &get_accel_scale(void) const { return get_accel_scale(get_primary_accel()); }
+
+    // get accel scale
+    const AP_Int16 get_product_id(uint8_t i) const;
+    const AP_Int16 get_product_id(void) const { return get_product_id(get_primary_accel()); }
 
     // class level parameters
     static const struct AP_Param::GroupInfo var_info[];
 
     // set overall board orientation
     void set_board_orientation(enum Rotation orientation) {
-        _board_orientation = orientation;
+        //TODO danari _board_orientation = orientation;
     }
 
-    // override default filter frequency
-    void set_default_filter(float filter_hz) {
-        if (!_mpu6000_filter.load()) {
-            _mpu6000_filter.set(filter_hz);
-        }
-    }
+    // override default filter frequency //TODO check state-index
+    void set_default_filter(float filter_hz);
 
-    // get_filter - return filter in hz
-    uint8_t get_filter() const { return _mpu6000_filter.get(); }
+    // get_filter - return filter in hz //TODO check state-index
+    uint8_t get_filter() const;
 
     uint16_t error_count(void) const { return 0; }
     bool healthy(void) const { return get_gyro_health() && get_accel_health(); }
@@ -176,33 +202,12 @@ public:
     // save parameters to eeprom
     void  _save_parameters();
 
-    // Most recent accelerometer reading obtained by ::_update
-    Vector3f _accel[INS_MAX_INSTANCES];
-
-    // previous accelerometer reading obtained by ::_update
-    Vector3f _previous_accel[INS_MAX_INSTANCES];
-
-    // Most recent gyro reading obtained by ::_update
-    Vector3f _gyro[INS_MAX_INSTANCES];
-
-    // product id
-    AP_Int16 _product_id;
-
-    // accelerometer scaling and offsets
-    AP_Vector3f             _accel_scale[INS_MAX_INSTANCES];
-    AP_Vector3f             _accel_offset[INS_MAX_INSTANCES];
-    AP_Vector3f             _gyro_offset[INS_MAX_INSTANCES];
-
-    // filtering frequency (0 means default)
-    AP_Int8                 _mpu6000_filter;
-
-    // board orientation from AHRS
-    enum Rotation     _board_orientation;
-
+    void  _print_all_accels();
 
 private:
     AP_InertialSensor_Backend *drivers[INS_MAX_INSTANCES];
-  
+    IMU_State                  state[INS_MAX_INSTANCES];
+
     /// number of IMU instances present
     uint8_t num_instances:2;
 
@@ -212,18 +217,17 @@ private:
 };
 
 #include <AP_InertialSensor_Backend.h>
-#include <AP_InertialSensor_Oilpan.h>
+#include <AP_InertialSensor_UserInteract_Stream.h>
+#include <AP_InertialSensor_UserInteract_MAVLink.h>
+/*#include <AP_InertialSensor_Oilpan.h>
 #include <AP_InertialSensor_MPU6000.h>
 #include <AP_InertialSensor_HIL.h>
 #include <AP_InertialSensor_PX4.h>
 #include <AP_InertialSensor_VRBRAIN.h>
-#include <AP_InertialSensor_UserInteract_Stream.h>
-#include <AP_InertialSensor_UserInteract_MAVLink.h>
 #include <AP_InertialSensor_Flymaple.h>
 #include <AP_InertialSensor_L3G4200D.h>
 #include <AP_InertialSensor_MPU9150.h>
 #include <AP_InertialSensor_MPU9250.h>
-#include <AP_InertialSensor_L3GD20.h>
+#include <AP_InertialSensor_L3GD20.h>*/
 
-//#include <AP_InertialSensor_DUMB.h>
 #endif // __AP_INERTIAL_SENSOR_H__
