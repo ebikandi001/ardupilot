@@ -45,7 +45,6 @@ public:
     primary_instance = 0;      
 }
 
-
     enum Start_style {
         COLD_START = 0,
         WARM_START
@@ -61,6 +60,8 @@ public:
 
     //The IMU_State structure is filled in by the backend driver
     struct IMU_State {
+        uint8_t instance; // the instance number of this GPS
+
         // Most recent accelerometer reading obtained by ::_update
         Vector3f _accel;
 

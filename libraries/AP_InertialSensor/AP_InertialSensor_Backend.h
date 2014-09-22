@@ -27,7 +27,7 @@
 class AP_InertialSensor_Backend
 {
 public:
-  AP_InertialSensor_Backend(AP_InertialSensor & _imu);
+  AP_InertialSensor_Backend(AP_InertialSensor &_imu, AP_InertialSensor::IMU_State &_state);
 
     // we declare a virtual destructor so that drivers can
     // override with a custom destructor if need be.
@@ -105,7 +105,8 @@ public:
 protected:
     //TODO "port" object to encapsulate the bus driver
     //AP_HAL::SPIDeviceDriver *port;                          ///< SPI we are attached to
-    AP_InertialSensor &imu;                                 ///< access to frontend (for parameters)
+    AP_InertialSensor                   &imu;                 ///< access to frontend (for parameters)
+    AP_InertialSensor::IMU_State        &state;               ///< public state for this instance
 };
 
 #endif // __AP_INERTIALSENSOR_BACKEND_H__
