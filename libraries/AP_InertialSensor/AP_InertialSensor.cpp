@@ -166,7 +166,7 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 
     bool success = true;
 
-
+    //TODO edit the instance-detection process to handle multiple sensors
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
     if(drivers[i] == NULL)
     detect_instance(i);
@@ -182,12 +182,16 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 
 
     AP_InertialSensor_Backend *ins;
-    ins = new AP_InertialSensor_MPU9250(*this);
+    state[0].instance = 0;
+    state[0]._board_orientation = ROTATION_NONE;
+    ins = new AP_InertialSensor_MPU9250(*this, state[0]);
         drivers[0] = ins;
         drivers[0]->init(COLD_START, sample_rate);
         num_instances++;
     for (uint8_t i=1; i<INS_MAX_INSTANCES; i++) {
-        ins = new AP_InertialSensor_MPU6000(*this);
+        state[i].instance = i;
+        state[i]._board_orientation = ROTATION_NONE;
+        ins = new AP_InertialSensor_MPU6000(*this, state[i]);
         drivers[i] = ins;
         drivers[i]->init(COLD_START, sample_rate);
         hal.console->println("IMU_MPU6000");

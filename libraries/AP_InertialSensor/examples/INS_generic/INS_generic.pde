@@ -181,6 +181,7 @@ void run_test()
 {
     Vector3f accel;
     Vector3f gyro;
+	uint8_t p_id = 0;
     float length;
 	uint8_t counter = 0;
    
@@ -200,9 +201,9 @@ void run_test()
         uint8_t num_sensors = ins.get_num_sensors();
         for(uint8_t i=0; i<num_sensors; i++){
             // read samples from ins
-            accel = ins.get_accel(0);
-            gyro = ins.get_gyro(0);
-
+            accel = ins.get_accel(i);
+            gyro = ins.get_gyro(i);
+    
             length = accel.length();
 	        if (counter++ % 50 == 0) {
 		        // display results

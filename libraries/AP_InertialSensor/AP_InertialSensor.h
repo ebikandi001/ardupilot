@@ -223,12 +223,12 @@ private:
 #include <AP_InertialSensor_MPU6000.h>
 #include <AP_InertialSensor_HIL.h>
 #include <AP_InertialSensor_Flymaple.h>
-/*#include <AP_InertialSensor_Oilpan.h>
+#include <AP_InertialSensor_Oilpan.h>
 #include <AP_InertialSensor_PX4.h>
 #include <AP_InertialSensor_VRBRAIN.h>
 #include <AP_InertialSensor_L3G4200D.h>
 #include <AP_InertialSensor_MPU9150.h>
 #include <AP_InertialSensor_MPU9250.h>
-#include <AP_InertialSensor_L3GD20.h>*/
+#include <AP_InertialSensor_L3GD20.h>
 
 #endif // __AP_INERTIAL_SENSOR_H__
