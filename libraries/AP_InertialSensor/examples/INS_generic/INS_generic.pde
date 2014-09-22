@@ -200,8 +200,13 @@ void run_test()
         uint8_t num_sensors = ins.get_num_sensors();
         for(uint8_t i=0; i<num_sensors; i++){
             // read samples from ins
+<<<<<<< HEAD
             accel = ins.get_accel(0);
             gyro = ins.get_gyro(0);
+=======
+            accel = ins.get_accel(i);
+            gyro = ins.get_gyro(i);
+>>>>>>> b15d4278eea81c37a3db3ffbe2366233ce7490c5
 
             length = accel.length();
 	        if (counter++ % 50 == 0) {

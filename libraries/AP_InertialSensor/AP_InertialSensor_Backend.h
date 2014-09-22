@@ -106,7 +106,6 @@ protected:
     //TODO "port" object to encapsulate the bus driver
     //AP_HAL::SPIDeviceDriver *port;                          ///< SPI we are attached to
     AP_InertialSensor &imu;                                 ///< access to frontend (for parameters)
-    //TODO state objetua
 };
 
 #endif // __AP_INERTIALSENSOR_BACKEND_H__
