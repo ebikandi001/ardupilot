@@ -36,10 +36,7 @@ class AP_InertialSensor_Backend;
 class AP_InertialSensor
 {
 public:
-    AP_InertialSensor()//:
-    //_accel(),
-    //_gyro(),
-    //_board_orientation(ROTATION_NONE)
+    AP_InertialSensor()
 {
     AP_Param::setup_object_defaults(this, var_info);  
     primary_instance = 0;      

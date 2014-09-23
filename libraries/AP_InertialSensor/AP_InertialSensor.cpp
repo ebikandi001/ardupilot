@@ -124,22 +124,22 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
     state[instance]._board_orientation = ROTATION_NONE;
 
     #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
-     //   ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
+        ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
         hal.console->println("IMU_MPU6000");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
-     //   ins = new AP_InertialSensor_PX4(*this, state[instance]);
+        ins = new AP_InertialSensor_PX4(*this, state[instance]);
         hal.console->println("IMU_PX4");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-     //   ins = new AP_InertialSensor_VRBRAIN(*this, state[instance]);
+        ins = new AP_InertialSensor_VRBRAIN(*this, state[instance]);
         hal.console->println("IMU_VRBRAIN");
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NONE || CONFIG_HAL_BOARD == HAL_BOARD_EMPTY ||CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL 
-     //   ins = new AP_InertialSensor_HIL(*this, state[instance]);
+        ins = new AP_InertialSensor_HIL(*this, state[instance]);
         hal.console->println("IMU_HIL");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_APM1
-     //   ins = new AP_InertialSensor_OILPAN(*this, state[instance]);
+        ins = new AP_InertialSensor_OILPAN(*this, state[instance]);
         hal.console->println("IMU_OILPAN");
     #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
-     //   ins = new AP_InertialSensor_FLYMAPLE(*this, state[instance]);
+        ins = new AP_InertialSensor_FLYMAPLE(*this, state[instance]);
         hal.console->println("IMU_FLYMAPLE");
     /*#elif CONFIG_INS_TYPE == HAL_INS_L3G4200D //TODO Not configured in AP_Hal_Boards.h
         ins = new AP_InertialSensor_L3G4200D(*this);
