@@ -597,6 +597,7 @@ bool AP_InertialSensor_MPU6000::_hardware_init(AP_InertialSensor::Sample_rate sa
 // note that this is much better than the oilpan gyros
 float AP_InertialSensor_MPU6000::get_gyro_drift_rate(void)
 {
+    printf("MPU6000_get_gyro_drift_rate\n");
     // 0.5 degrees/second/minute
     return ToRad(0.5/60);
 }

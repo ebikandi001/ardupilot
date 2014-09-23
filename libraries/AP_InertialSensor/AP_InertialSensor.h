@@ -39,7 +39,7 @@ public:
     AP_InertialSensor()
 {
     AP_Param::setup_object_defaults(this, var_info);  
-    primary_instance = 0;      
+    primary_instance = 0; 
 }
 
     enum Start_style {

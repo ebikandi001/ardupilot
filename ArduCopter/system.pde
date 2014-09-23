@@ -304,15 +304,17 @@ static void init_ardupilot()
 static void startup_ground(bool force_gyro_cal)
 {
     gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
+ 
+     // Warm up and read Gyro offsets
+    // -----------------------------
+    ins.init(force_gyro_cal?AP_InertialSensor::COLD_START:AP_InertialSensor::WARM_START,
+             ins_sample_rate);
 
     // initialise ahrs (may push imu calibration into the mpu6000 if using that device).
     ahrs.init();
     ahrs.set_vehicle_class(AHRS_VEHICLE_COPTER);
 
-    // Warm up and read Gyro offsets
-    // -----------------------------
-    ins.init(force_gyro_cal?AP_InertialSensor::COLD_START:AP_InertialSensor::WARM_START,
-             ins_sample_rate);
+  
  #if CLI_ENABLED == ENABLED
     report_ins();
  #endif
