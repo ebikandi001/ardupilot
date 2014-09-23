@@ -483,12 +483,13 @@ static void startup_INS_ground(bool do_accel_init)
         mavlink_delay(100);
     }
 
+    ins.init(style, ins_sample_rate);
     ahrs.init();
     ahrs.set_fly_forward(true);
     ahrs.set_vehicle_class(AHRS_VEHICLE_FIXED_WING);
     ahrs.set_wind_estimation(true);
 
-    ins.init(style, ins_sample_rate);
+
     if (do_accel_init) {
         ins.init_accel();
         ahrs.set_trim(Vector3f(0, 0, 0));
