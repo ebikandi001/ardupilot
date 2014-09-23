@@ -377,10 +377,6 @@ static void startup_INS_ground(bool force_accel_level)
     gcs_send_text_P(SEVERITY_MEDIUM, PSTR("Beginning INS calibration; do not move vehicle"));
 	mavlink_delay(1000);
 
-    ahrs.init();
-	ahrs.set_fly_forward(true);
-    ahrs.set_vehicle_class(AHRS_VEHICLE_GROUND);
-
     AP_InertialSensor::Start_style style;
     if (g.skip_gyro_cal && !force_accel_level) {
         style = AP_InertialSensor::WARM_START;
@@ -388,7 +384,12 @@ static void startup_INS_ground(bool force_accel_level)
         style = AP_InertialSensor::COLD_START;
     }
 
-	ins.init(style, ins_sample_rate);
+	ins.init(style, ins_sample_rate);   
+
+
+    ahrs.init();
+	ahrs.set_fly_forward(true);
+    ahrs.set_vehicle_class(AHRS_VEHICLE_GROUND);
 
     if (force_accel_level) {
         // when MANUAL_LEVEL is set to 1 we don't do accelerometer
