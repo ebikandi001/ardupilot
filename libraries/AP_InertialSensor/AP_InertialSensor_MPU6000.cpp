@@ -312,6 +312,7 @@ bool AP_InertialSensor_MPU6000::_update( void )
         }
     }
     
+    
     return true;
 }
 
@@ -337,6 +338,8 @@ bool AP_InertialSensor_MPU6000::_data_ready()
  */
 void AP_InertialSensor_MPU6000::_poll_data(void)
 {
+  //uint32_t start = hal.scheduler->micros();
+
     if (hal.scheduler->in_timerprocess()) {
         if (!_spi_sem->take_nonblocking()) {
             /*
@@ -366,6 +369,9 @@ void AP_InertialSensor_MPU6000::_poll_data(void)
                      "failed to take SPI semaphore synchronously"));
         }
     }
+  //uint32_t end = hal.scheduler->micros() -start;
+
+ // hal.console->printf("MPU6000_poll_data = %"PRIu32" µs\n", end);
 }
 
 
@@ -597,7 +603,6 @@ bool AP_InertialSensor_MPU6000::_hardware_init(AP_InertialSensor::Sample_rate sa
 // note that this is much better than the oilpan gyros
 float AP_InertialSensor_MPU6000::get_gyro_drift_rate(void)
 {
-    printf("MPU6000_get_gyro_drift_rate\n");
     // 0.5 degrees/second/minute
     return ToRad(0.5/60);
 }

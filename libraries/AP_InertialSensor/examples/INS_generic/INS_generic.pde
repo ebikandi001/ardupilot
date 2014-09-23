@@ -196,9 +196,15 @@ void run_test()
 
         // wait until we have a sample
         ins.wait_for_sample(1000);
+      //  uint32_t start = hal.scheduler->micros();
+
         ins.update();
 
+      //  uint32_t end = hal.scheduler->micros() -start;
+       // hal.console->printf("IMU_multi_test = %"PRIu32" µs\n", end);
+
         uint8_t num_sensors = ins.get_num_sensors();
+
         for(uint8_t i=0; i<num_sensors; i++){
             // read samples from ins
             accel = ins.get_accel(i);
@@ -211,7 +217,7 @@ void run_test()
 			              		                             i, accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
 	        }
         }
-        
+
     }
 
     // clear user input

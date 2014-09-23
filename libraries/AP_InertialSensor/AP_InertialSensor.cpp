@@ -165,7 +165,7 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 {
 
     bool success = true;
-
+/*
     //TODO edit the instance-detection process to handle multiple sensors
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
     if(drivers[i] == NULL)
@@ -175,10 +175,10 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
     drivers[i]->init(style, sample_rate);
     }
 
-
+*/
   /****************
     MULTIPLE IMU TEST WITH HIL DRIVER
-    ***************
+    ***************/
 
 
     AP_InertialSensor_Backend *ins;
