@@ -35,6 +35,8 @@ static AP_Compass_HIL compass;
  #error Unrecognized CONFIG_COMPASS setting
 #endif
 
+//static AP_Compass_ZERO compass;
+
 uint32_t timer;
 
 void setup() {
