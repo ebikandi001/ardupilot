@@ -231,6 +231,8 @@ static DataFlash_Empty DataFlash;
 ////////////////////////////////////////////////////////////////////////////////
 #if MAIN_LOOP_RATE == 400
 static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_400HZ;
+#elif MAIN_LOOP_RATE == 200
+static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_200HZ;
 #else
 static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
 #endif
@@ -303,6 +305,9 @@ static bool start_command(const AP_Mission::Mission_Command& cmd);
 static bool verify_command(const AP_Mission::Mission_Command& cmd);
 static void exit_mission();
 AP_Mission mission(ahrs, &start_command, &verify_command, &exit_mission);
+
+// prototype this for use inside the GCS class
+static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Optical flow sensor
@@ -747,7 +752,8 @@ static void pre_arm_checks(bool display_failure);
 // setup the var_info table
 AP_Param param_loader(var_info);
 
-#if MAIN_LOOP_RATE == 400
+//#if MAIN_LOOP_RATE == 400
+if MAIN_LOOP_RATE > 100
 /*
   scheduler table for fast CPUs - all regular tasks apart from the fast_loop()
   should be listed here, along with how often they should be called
@@ -898,6 +904,12 @@ void setup()
 
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+
+#if MAIN_LOOP_RATE == 200
+    scheduler.set_tick_shift(1);
+#endif
+
+    fast_loopTimer = hal.scheduler->micros();
 }
 
 /*
@@ -923,7 +935,7 @@ static void perf_update(void)
     if (g.log_bitmask & MASK_LOG_PM)
         Log_Write_Performance();
     if (scheduler.debug()) {
-        cliSerial->printf_P(PSTR("PERF: %u/%u %lu\n"),
+        gcs_send_text_fmt(PSTR("PERF: %u/%u %lu\n"),
                             (unsigned)perf_info_get_num_long_running(),
                             (unsigned)perf_info_get_num_loops(),
                             (unsigned long)perf_info_get_max_time());
