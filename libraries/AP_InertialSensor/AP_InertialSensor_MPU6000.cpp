@@ -492,10 +492,11 @@ bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
     _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
 
     // Chip reset
+    _register_write(MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
+    hal.scheduler->delay(100);
+
     uint8_t tries;
     for (tries = 0; tries<5; tries++) {
-        _register_write(MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
-        hal.scheduler->delay(100);
 
         // Wake up device and select GyroZ clock. Note that the
         // MPU6000 starts up in sleep mode, and it can take some time
