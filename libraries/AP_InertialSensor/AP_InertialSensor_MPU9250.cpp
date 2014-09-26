@@ -274,7 +274,7 @@ bool AP_InertialSensor_MPU9250::wait_for_sample(uint16_t timeout_ms)
     if (_sample_available()) {
         return true;
     }
-    uint64_t start = hal.scheduler->millis64();
+    /*uint64_t start = hal.scheduler->millis64();
     while ((hal.scheduler->millis64() - start) < timeout_ms) {
         uint64_t tnow = hal.scheduler->micros64();
         uint64_t tdelay = (_last_sample_usec + _sample_time_usec) - tnow;
@@ -284,7 +284,7 @@ bool AP_InertialSensor_MPU9250::wait_for_sample(uint16_t timeout_ms)
         if (_sample_available()) {
             return true;
         }
-    }
+    }*/
     return false;
 }
 

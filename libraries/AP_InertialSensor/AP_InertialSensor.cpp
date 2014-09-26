@@ -146,9 +146,10 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
         hal.console->println("IMU_L3G4200D");
         printf("L3G4200D \n");  */  
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-        ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
-        //ins = new AP_InertialSensor_MPU9250(*this, state[instance]);
-        hal.console->println("IMU_MPU6000");
+        //ins = new AP_InertialSensor_MPU6000(*this, state[instance]);
+        //hal.console->println("IMU_MPU6000");
+        ins = new AP_InertialSensor_MPU9250(*this, state[instance]);
+        hal.console->println("IMU_MPU9250");
     #else
         #error Unrecognised IMU.
     #endif
@@ -177,24 +178,25 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 
 */
   /****************
-    MULTIPLE IMU TEST WITH HIL DRIVER
-    ***************/
+    MULTIPLE IMU TEST
+    **************/
 
 
     AP_InertialSensor_Backend *ins;
     state[0].instance = 0;
     state[0]._board_orientation = ROTATION_NONE;
-    ins = new AP_InertialSensor_MPU9250(*this, state[0]);
+    ins = new AP_InertialSensor_MPU6000(*this, state[0]);
         drivers[0] = ins;
         drivers[0]->init(COLD_START, sample_rate);
+        hal.console->println("IMU_MPU6000");
         num_instances++;
     for (uint8_t i=1; i<INS_MAX_INSTANCES; i++) {
         state[i].instance = i;
         state[i]._board_orientation = ROTATION_NONE;
-        ins = new AP_InertialSensor_MPU6000(*this, state[i]);
+        ins = new AP_InertialSensor_MPU9250(*this, state[i]);
         drivers[i] = ins;
         drivers[i]->init(COLD_START, sample_rate);
-        hal.console->println("IMU_MPU6000");
+        hal.console->println("IMU_MPU9250");
         num_instances++;
         //success &= drivers[i]->init(style, sample_rate);
     }
@@ -236,12 +238,12 @@ bool AP_InertialSensor::update()
 {
     bool success = true;
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-        if(drivers[i] == NULL){
-            detect_instance(i);
-        }
-        else{
+    //    if(drivers[0] == NULL){
+    //        detect_instance(0);
+    //    }
+    //    else{
             success &= drivers[i]->_update();
-        }
+    //    }
     }
     return success;
 }
@@ -583,7 +585,11 @@ void AP_InertialSensor::_calculate_trim(Vector3f accel_sample, float& trim_roll,
 
 bool AP_InertialSensor::wait_for_sample(uint16_t timeout_ms) 
 { 
-	return drivers[primary_instance]->wait_for_sample(timeout_ms);  
+    for(uint8_t i = 0; i<INS_MAX_INSTANCES; i++)
+    {
+	    drivers[i]->wait_for_sample(timeout_ms);  
+    }
+    return true;
 }
 
 float AP_InertialSensor::get_delta_time() const
