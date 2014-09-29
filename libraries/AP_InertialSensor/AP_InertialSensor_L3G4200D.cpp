@@ -384,17 +384,25 @@ bool AP_InertialSensor_L3G4200D::_sample_available(void)
 
 bool AP_InertialSensor_L3G4200D::wait_for_sample(uint16_t timeout_ms)
 {
-    uint32_t start_us = hal.scheduler->micros();
-    while (clock_nanosleep(CLOCK_MONOTONIC, 
-                           TIMER_ABSTIME, &_next_sample_ts, NULL) == -1 && errno == EINTR) ;
-    _next_sample_ts.tv_nsec += _sample_period_usec * 1000UL;
-    if (_next_sample_ts.tv_nsec >= 1.0e9) {
-        _next_sample_ts.tv_nsec -= 1.0e9;
-        _next_sample_ts.tv_sec++;
-
+    if (_sample_available()) {
+        return true;
     }
+    if(state.instance ==0 )
+    {
+        uint32_t start_us = hal.scheduler->micros();
+        while (clock_nanosleep(CLOCK_MONOTONIC, 
+                               TIMER_ABSTIME, &_next_sample_ts, NULL) == -1 && errno == EINTR) ;
+        _next_sample_ts.tv_nsec += _sample_period_usec * 1000UL;
+        if (_next_sample_ts.tv_nsec >= 1.0e9) {
+            _next_sample_ts.tv_nsec -= 1.0e9;
+            _next_sample_ts.tv_sec++;
+
+        }
+        return true;
+    }
+
     //_accumulate();
-    return true;
+    return false;
 
 }
 

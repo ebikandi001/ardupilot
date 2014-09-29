@@ -238,17 +238,20 @@ bool AP_InertialSensor_PX4::wait_for_sample(uint16_t timeout_ms)
     if (_sample_available()) {
         return true;
     }
-    uint64_t start = hal.scheduler->millis64();
-    while ((hal.scheduler->millis64() - start) < timeout_ms) {
-        uint64_t tnow = hal.scheduler->micros64();
-        // we spin for the last timing_lag microseconds. Before that
-        // we yield the CPU to allow IO to happen
-        const uint16_t timing_lag = 400;
-        if (_last_sample_timestamp + _sample_time_usec > tnow+timing_lag) {
-            hal.scheduler->delay_microseconds(_last_sample_timestamp + _sample_time_usec - (tnow+timing_lag));
-        }
-        if (_sample_available()) {
-            return true;
+    if(state.instance == 0)
+    {
+        uint64_t start = hal.scheduler->millis64();
+        while ((hal.scheduler->millis64() - start) < timeout_ms) {
+            uint64_t tnow = hal.scheduler->micros64();
+            // we spin for the last timing_lag microseconds. Before that
+            // we yield the CPU to allow IO to happen
+            const uint16_t timing_lag = 400;
+            if (_last_sample_timestamp + _sample_time_usec > tnow+timing_lag) {
+                hal.scheduler->delay_microseconds(_last_sample_timestamp + _sample_time_usec - (tnow+timing_lag));
+            }
+            if (_sample_available()) {
+                return true;
+            }
         }
     }
     return false;

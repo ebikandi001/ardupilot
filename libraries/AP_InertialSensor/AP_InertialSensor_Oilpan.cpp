@@ -136,12 +136,16 @@ bool AP_InertialSensor_Oilpan::wait_for_sample(uint16_t timeout_ms)
     if (_sample_available()) {
         return true;
     }
-    uint32_t start = hal.scheduler->millis();
-    while ((hal.scheduler->millis() - start) < timeout_ms) {
-        hal.scheduler->delay_microseconds(100);
-        if (_sample_available()) {
-            return true;
+    if(state.instance == 0)    
+    {
+        uint32_t start = hal.scheduler->millis();
+        while ((hal.scheduler->millis() - start) < timeout_ms) {
+            hal.scheduler->delay_microseconds(100);
+            if (_sample_available()) {
+                return true;
+            }
         }
+
     }
     return false;
 }
