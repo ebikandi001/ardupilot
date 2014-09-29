@@ -12,6 +12,7 @@
    than 1 then redundent sensors may be available
  */
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_LINUX || CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+//#define INS_MAX_INSTANCES 3
 #define INS_MAX_INSTANCES 2
 #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #define INS_MAX_INSTANCES 3
@@ -132,37 +133,37 @@ public:
     /// @returns	vector of rotational rates in radians/sec
     ///
     const Vector3f     get_gyro(uint8_t i) const;
-    const Vector3f     get_gyro(void) const { return get_gyro(_get_primary_gyro()); }
+    const Vector3f     get_gyro(void) const;
     void       set_gyro(uint8_t instance, const Vector3f &gyro) {}
 
     // set gyro offsets in radians/sec
     const Vector3f get_gyro_offsets(uint8_t i) const;
-    const Vector3f get_gyro_offsets(void) const { return get_gyro_offsets(_get_primary_gyro()); }
+    const Vector3f get_gyro_offsets(void) const;
 
     /// Fetch the current accelerometer values
     ///
     /// @returns	vector of current accelerations in m/s/s
     ///
     const Vector3f     get_accel(uint8_t i) const;
-    const Vector3f     get_accel(void) const { return get_accel(get_primary_accel()); }
+    const Vector3f     get_accel(void) const;
     void       set_accel(uint8_t instance, const Vector3f &accel) {}
 
     // multi-device interface
     bool get_gyro_health(uint8_t instance) const { return true; }
     bool get_gyro_health(void) const { return get_gyro_health(_get_primary_gyro()); }
-    uint8_t get_gyro_count(void) const { return 1; };
+    uint8_t get_gyro_count(void) const { return INS_MAX_INSTANCES; };
 
     bool get_accel_health(uint8_t instance) const { return true; }
     bool get_accel_health(void) const { return get_accel_health(get_primary_accel()); }
-    uint8_t get_accel_count(void) const { return 1; };
+    uint8_t get_accel_count(void) const { return INS_MAX_INSTANCES; };
 
     // get accel offsets in m/s/s
     const Vector3f get_accel_offsets(uint8_t i) const;
-    const Vector3f get_accel_offsets(void) const { return get_accel_offsets(get_primary_accel()); }
+    const Vector3f get_accel_offsets(void) const;
 
     // get accel scale
     const Vector3f get_accel_scale(uint8_t i) const;
-    const Vector3f get_accel_scale(void) const { return get_accel_scale(get_primary_accel()); }
+    const Vector3f get_accel_scale(void) const;
 
     // get accel scale
     const AP_Int16 get_product_id(uint8_t i) const;
