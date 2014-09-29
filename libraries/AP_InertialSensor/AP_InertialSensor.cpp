@@ -186,21 +186,19 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
     state[0].instance = 0;
     state[0]._board_orientation = ROTATION_NONE;
     ins = new AP_InertialSensor_MPU6000(*this, state[0]);
-        drivers[0] = ins;
-        drivers[0]->init(COLD_START, sample_rate);
-        hal.console->println("IMU_MPU6000");
-        num_instances++;
-    for (uint8_t i=1; i<INS_MAX_INSTANCES; i++) {
-        state[i].instance = i;
-        state[i]._board_orientation = ROTATION_NONE;
-        ins = new AP_InertialSensor_MPU9250(*this, state[i]);
-        drivers[i] = ins;
-        drivers[i]->init(COLD_START, sample_rate);
-        hal.console->println("IMU_MPU9250");
-        num_instances++;
-        //success &= drivers[i]->init(style, sample_rate);
-    }
-    
+    drivers[0] = ins;
+    drivers[0]->init(COLD_START, sample_rate);
+    hal.console->println("IMU_MPU6000");
+    num_instances++;
+   
+    state[1].instance = 1;
+    state[1]._board_orientation = ROTATION_NONE;
+    ins = new AP_InertialSensor_MPU9250(*this, state[1]);
+    drivers[1] = ins;
+    drivers[1]->init(COLD_START, sample_rate);
+    hal.console->println("IMU_MPU9250");
+    num_instances++;
+
 /******     end test initialization ****************/
     
     //TODO check return statement on drivers[i]->init();**/
