@@ -619,34 +619,9 @@ const Vector3f  AP_InertialSensor::get_gyro(uint8_t i) const
     return state[i]._gyro; 
 }
 
-const Vector3f AP_InertialSensor::get_gyro(void) const
-{
-    Vector3f sum = Vector3f(0,0,0);
-    Vector3f ins_gyro;
-    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++)
-    {
-        ins_gyro = state[i]._gyro;
-        sum = Vector3f(sum.x + ins_gyro.x, sum.y + ins_gyro.y, sum.z + ins_gyro.z );
-    } 
-    return Vector3f(sum.x/INS_MAX_INSTANCES, sum.y/INS_MAX_INSTANCES, sum.z/INS_MAX_INSTANCES);
-}
-
 const Vector3f AP_InertialSensor::get_accel(uint8_t i) const 
 {  
     return state[i]._accel; 
-}
-
-const Vector3f  AP_InertialSensor::get_accel(void) const
-{
-    Vector3f sum = Vector3f(0,0,0);
-    Vector3f ins_accel;
-    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++)
-    {
-        ins_accel = state[i]._accel;
-
-        sum = Vector3f(sum.x + ins_accel.x, sum.y + ins_accel.y, sum.z + ins_accel.z );
-    } 
-    return  Vector3f(sum.x/INS_MAX_INSTANCES, sum.y/INS_MAX_INSTANCES, sum.z/INS_MAX_INSTANCES); 
 }
 
 const Vector3f AP_InertialSensor::get_accel_offsets(uint8_t i) const 
@@ -654,35 +629,10 @@ const Vector3f AP_InertialSensor::get_accel_offsets(uint8_t i) const
     return state[i]._accel_offset; 
 }
 
-const Vector3f AP_InertialSensor::get_accel_offsets(void) const
-{
-    Vector3f sum = Vector3f(0,0,0);
-    Vector3f ins_accel_offset;
-    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++)
-    {
-        ins_accel_offset = state[i]._accel_offset;
-        sum = Vector3f(sum.x + ins_accel_offset.x, sum.y + ins_accel_offset.y, sum.z + ins_accel_offset.z );
-    } 
-
-    return Vector3f(sum.x/INS_MAX_INSTANCES, sum.y/INS_MAX_INSTANCES, sum.z/INS_MAX_INSTANCES);   
-}
 
 const Vector3f AP_InertialSensor::get_gyro_offsets(uint8_t i) const 
 { 
     return state[i]._gyro_offset; 
-}
-
-const Vector3f AP_InertialSensor::get_gyro_offsets(void) const
-{
-    Vector3f sum = Vector3f(0,0,0);
-    Vector3f ins_gyro_offset;
-    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++)
-    {
-        ins_gyro_offset = state[i]._gyro_offset;
-        sum = Vector3f(sum.x + ins_gyro_offset.x, sum.y + ins_gyro_offset.y, sum.z + ins_gyro_offset.z );
-    } 
-
-    return Vector3f(sum.x/INS_MAX_INSTANCES, sum.y/INS_MAX_INSTANCES, sum.z/INS_MAX_INSTANCES);   
 }
 
 const Vector3f AP_InertialSensor::get_accel_scale(uint8_t i) const 
@@ -690,18 +640,6 @@ const Vector3f AP_InertialSensor::get_accel_scale(uint8_t i) const
     return state[i]._accel_scale; 
 }
 
-const Vector3f AP_InertialSensor::get_accel_scale(void) const
-{
-    Vector3f sum = Vector3f(0,0,0);
-    Vector3f ins_accel_scale;
-    for(uint8_t i=0; i<INS_MAX_INSTANCES; i++)
-    {
-        ins_accel_scale = get_accel_scale(i);
-        sum = Vector3f(sum.x + ins_accel_scale.x, sum.y + ins_accel_scale.y, sum.z + ins_accel_scale.z );
-    } 
-
-    return Vector3f(sum.x/INS_MAX_INSTANCES, sum.y/INS_MAX_INSTANCES, sum.z/INS_MAX_INSTANCES);   
-}
 
 const AP_Int16 AP_InertialSensor::get_product_id(uint8_t i) const 
 {  

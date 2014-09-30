@@ -133,19 +133,19 @@ public:
     /// @returns	vector of rotational rates in radians/sec
     ///
     const Vector3f     get_gyro(uint8_t i) const;
-    const Vector3f     get_gyro(void) const;
+    const Vector3f     get_gyro(void) const{  return get_gyro(_get_primary_gyro());   }
     void       set_gyro(uint8_t instance, const Vector3f &gyro) {}
 
     // set gyro offsets in radians/sec
     const Vector3f get_gyro_offsets(uint8_t i) const;
-    const Vector3f get_gyro_offsets(void) const;
+    const Vector3f get_gyro_offsets(void) const {return get_gyro_offsets(_get_primary_gyro());};
 
     /// Fetch the current accelerometer values
     ///
     /// @returns	vector of current accelerations in m/s/s
     ///
     const Vector3f     get_accel(uint8_t i) const;
-    const Vector3f     get_accel(void) const;
+    const Vector3f     get_accel(void) const {  return get_accel(get_primary_accel());   }
     void       set_accel(uint8_t instance, const Vector3f &accel) {}
 
     // multi-device interface
@@ -159,11 +159,11 @@ public:
 
     // get accel offsets in m/s/s
     const Vector3f get_accel_offsets(uint8_t i) const;
-    const Vector3f get_accel_offsets(void) const;
+    const Vector3f get_accel_offsets(void) const {  return get_accel_offsets(get_primary_accel());    }
 
     // get accel scale
     const Vector3f get_accel_scale(uint8_t i) const;
-    const Vector3f get_accel_scale(void) const;
+    const Vector3f get_accel_scale(void) const {  return get_accel_scale(get_primary_accel());  };
 
     // get accel scale
     const AP_Int16 get_product_id(uint8_t i) const;
