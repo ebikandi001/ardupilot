@@ -147,8 +147,6 @@ extern const AP_HAL::HAL& hal;
 #define MPUREG_WHOAMI                                   0x75
 
 
-
-
 // Configuration bits MPU 3000, MPU 6000 and MPU9250
 #define BITS_DLPF_CFG_256HZ_NOLPF2              0x00
 #define BITS_DLPF_CFG_188HZ                             0x01
@@ -206,10 +204,13 @@ uint16_t AP_InertialSensor_MPU9250::_init_sensor( Sample_rate sample_rate )
 
     uint8_t whoami = _register_read(MPUREG_WHOAMI);
     if (whoami != 0x73) {
-        // TODO: we should probably accept multiple chip
-        // revisions. This is the one on the PXF
-        hal.console->printf("MPU9250: unexpected WHOAMI 0x%x\n", (unsigned)whoami);
-        hal.scheduler->panic("MPU9250: bad WHOAMI");
+		whoami = _register_read(MPUREG_WHOAMI); // Give it a second chance
+		if (whoami != 0x73) { 
+	        // TODO: we should probably accept multiple chip
+	        // revisions. This is the one on the PXF
+	        hal.console->printf("MPU9250: unexpected WHOAMI 0x%x\n", (unsigned)whoami);
+	        hal.scheduler->panic("MPU9250: bad WHOAMI");
+		}	
     }
 
     uint8_t tries = 0;
@@ -480,7 +481,7 @@ bool AP_InertialSensor_MPU9250::_hardware_init(Sample_rate sample_rate)
     _register_write(MPUREG_PWR_MGMT_2, 0x00);            // only used for wake-up in accelerometer only low power mode
 
     // Disable I2C bus (recommended on datasheet)
-    _register_write(MPUREG_USER_CTRL, BIT_USER_CTRL_I2C_IF_DIS);
+//    _register_write(MPUREG_USER_CTRL, BIT_USER_CTRL_I2C_IF_DIS);
 
     // sample rate and filtering
     // to minimise the effects of aliasing we choose a filter

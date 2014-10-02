@@ -138,9 +138,9 @@ bool AP_Baro_MS5611_SPI::sem_take_nonblocking()
         if (!hal.scheduler->system_initializing()) {
             semfail_ctr++;
             if (semfail_ctr > 100) {
-                hal.scheduler->panic(PSTR("PANIC: failed to take _spi_sem "
+               /* hal.scheduler->panic(PSTR("PANIC: failed to take _spi_sem "
                                           "100 times in a row, in "
-                                          "AP_Baro_MS5611::_update"));
+                                          "AP_Baro_MS5611::_update"));*/
             }
         }
         return false; /* never reached */
