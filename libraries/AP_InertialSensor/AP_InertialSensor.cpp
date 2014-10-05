@@ -162,6 +162,108 @@ void AP_InertialSensor::detect_instance(uint8_t instance)
     
 }   
 
+void
+AP_InertialSensor::init_gyro(uint8_t instance)
+{
+    //TODO maybe there can be an IMU with more than a gyroscope
+
+    uint8_t num_gyros = 1;// min(imu.get_gyro_count(), INS_MAX_INSTANCES);
+    Vector3f last_average, best_avg;
+    float best_diff;
+    bool converged;
+
+    // cold start
+    hal.console->print_P(PSTR("Init Gyro"));
+
+    // flash leds to tell user to keep the IMU still
+    AP_Notify::flags.initialising = true;
+
+    // remove existing gyro offsets 
+    //for (uint8_t k=0; k<num_gyros; k++) {
+        state[instance]._gyro_offset = Vector3f(0,0,0);
+        best_diff = 0;
+        last_average.zero();
+        converged = false;
+    //}
+
+    for(int8_t c = 0; c < 5; c++) {
+        hal.scheduler->delay(5);
+        drivers[instance]->_update();
+    }
+
+    // the strategy is to average 50 points over 0.5 seconds, then do it
+    // again and see if the 2nd average is within a small margin of
+    // the first
+
+    uint8_t num_converged = 0;
+
+    // we try to get a good calibration estimate for up to 10 seconds
+    // if the gyros are stable, we should get it in 1 second
+    for (int16_t j = 0; j <= 20 && num_converged < num_gyros; j++) {
+        Vector3f gyro_sum, gyro_avg, gyro_diff;
+        float diff_norm;
+        uint8_t i;
+
+        //memset(diff_norm, 0, sizeof(diff_norm));
+
+        hal.console->print_P(PSTR("*"));
+
+        //for (uint8_t k=0; k<num_gyros; k++) {
+            gyro_sum.zero();
+        //}
+        for (i=0; i<50; i++) {
+            drivers[instance]->_update();
+            for (uint8_t k=0; k<num_gyros; k++) {
+                gyro_sum += get_gyro(instance);
+            }
+            hal.scheduler->delay(5);
+        }
+        for (uint8_t k=0; k<num_gyros; k++) {
+            gyro_avg = gyro_sum / i;
+            gyro_diff = last_average - gyro_avg;
+            diff_norm = gyro_diff.length();
+        }
+
+        //for (uint8_t k=0; k<num_gyros; k++) {
+            //if (converged) continue;
+            if (j == 0) {
+                best_diff = diff_norm;
+                best_avg = gyro_avg;
+            } else if (gyro_diff.length() < ToRad(0.1f)) {
+                // we want the average to be within 0.1 bit, which is 0.04 degrees/s
+                last_average = (gyro_avg * 0.5f) + (last_average * 0.5f);
+                state[instance]._gyro_offset = last_average;            
+                converged = true;
+                num_converged++;
+            } else if (diff_norm < best_diff) {
+                best_diff = diff_norm;
+                best_avg = (gyro_avg * 0.5f) + (last_average * 0.5f);
+            }
+            last_average = gyro_avg;
+        //}
+    }
+
+    // stop flashing leds
+    AP_Notify::flags.initialising = false;
+
+    if (num_converged == num_gyros) {
+        // all OK
+        return;
+    }
+
+    // we've kept the user waiting long enough - use the best pair we
+    // found so far
+    hal.console->println();
+   // for (uint8_t k=0; k<num_gyros; k++) {
+        if (!converged) {
+            hal.console->printf_P(PSTR("gyro did not converge: diff=%f dps\n"), ToDeg(best_diff));
+            state[instance]._gyro_offset = best_avg;
+        }
+    //}
+     
+    _save_parameters();
+}
+
 bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
 {
 
@@ -187,7 +289,7 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
     state[0]._board_orientation = ROTATION_NONE;
     ins = new AP_InertialSensor_MPU6000(*this, state[0]);
     drivers[0] = ins;
-    drivers[0]->init(COLD_START, sample_rate);
+    drivers[0]->init(sample_rate);
     hal.console->println("IMU_MPU6000");
     num_instances++;
     
@@ -195,12 +297,17 @@ bool AP_InertialSensor::init(Start_style style, Sample_rate sample_rate)
     state[1]._board_orientation = ROTATION_NONE;
     ins = new AP_InertialSensor_MPU9250(*this, state[1]);
     drivers[1] = ins;
-    drivers[1]->init(COLD_START, sample_rate);
+    drivers[1]->init(sample_rate);
     hal.console->println("IMU_MPU9250");
     num_instances++;
     
 /******     end test initialization ****************/
     
+    if (WARM_START != style) {
+        for(uint8_t i=0; i< INS_MAX_INSTANCES; i++){
+            init_gyro(i);
+        }
+    }
     //TODO check return statement on drivers[i]->init();**/
     return success;
 }
@@ -214,19 +321,6 @@ void AP_InertialSensor::init_accel()
         else{
             drivers[i]->init_accel();
         }
-    }
-}
-
-void AP_InertialSensor::init_gyro()
-{
-     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-        if(drivers[i] == NULL){
-            detect_instance(i);
-        }
-        else{
-            drivers[i]->init_gyro();
-        }
-;
     }
 }
 

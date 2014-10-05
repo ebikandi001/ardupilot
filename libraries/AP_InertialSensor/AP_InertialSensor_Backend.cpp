@@ -25,8 +25,7 @@ AP_InertialSensor_Backend::AP_InertialSensor_Backend(AP_InertialSensor &_imu, AP
 }
 
 void
-AP_InertialSensor_Backend::init( AP_InertialSensor::Start_style style,
-                         AP_InertialSensor::Sample_rate sample_rate)
+AP_InertialSensor_Backend::init(AP_InertialSensor::Sample_rate sample_rate)
 {
     state._product_id = _init_sensor(sample_rate);
 
@@ -37,133 +36,7 @@ AP_InertialSensor_Backend::init( AP_InertialSensor::Start_style style,
         }
     //}
 
-    if (AP_InertialSensor::WARM_START != style) {
-        // do cold-start calibration for gyro only
-        init_gyro();
-    }
 }
-
-/*
-void
-AP_InertialSensor_Backend::init_gyro()
-{
-    _init_gyro();
-
-    // save calibration
-    _save_parameters();
-}*/
-
-void
-AP_InertialSensor_Backend::init_gyro()
-{
-    //TODO maybe there can be an IMU with more than a gyroscope
-
-    uint8_t num_gyros = 1;// min(imu.get_gyro_count(), INS_MAX_INSTANCES);
-    Vector3f last_average, best_avg;
-    float best_diff;
-    bool converged;
-
-    // cold start
-    hal.console->print_P(PSTR("Init Gyro"));
-
-    // flash leds to tell user to keep the IMU still
-    AP_Notify::flags.initialising = true;
-
-    // remove existing gyro offsets 
-    //for (uint8_t k=0; k<num_gyros; k++) {
-        state._gyro_offset = Vector3f(0,0,0);
-        best_diff = 0;
-        last_average.zero();
-        converged = false;
-    //}
-
-    for(int8_t c = 0; c < 5; c++) {
-        hal.scheduler->delay(5);
-        _update();
-    }
-
-    // the strategy is to average 50 points over 0.5 seconds, then do it
-    // again and see if the 2nd average is within a small margin of
-    // the first
-
-    uint8_t num_converged = 0;
-
-    // we try to get a good calibration estimate for up to 10 seconds
-    // if the gyros are stable, we should get it in 1 second
-    for (int16_t j = 0; j <= 20 && num_converged < num_gyros; j++) {
-        Vector3f gyro_sum, gyro_avg, gyro_diff;
-        float diff_norm;
-        uint8_t i;
-
-        //memset(diff_norm, 0, sizeof(diff_norm));
-
-        hal.console->print_P(PSTR("*"));
-
-        //for (uint8_t k=0; k<num_gyros; k++) {
-            gyro_sum.zero();
-        //}
-        for (i=0; i<50; i++) {
-            _update();
-            for (uint8_t k=0; k<num_gyros; k++) {
-                gyro_sum += imu.get_gyro(state.instance);
-            }
-            hal.scheduler->delay(5);
-        }
-        for (uint8_t k=0; k<num_gyros; k++) {
-            gyro_avg = gyro_sum / i;
-            gyro_diff = last_average - gyro_avg;
-            diff_norm = gyro_diff.length();
-        }
-
-        //for (uint8_t k=0; k<num_gyros; k++) {
-            //if (converged) continue;
-            if (j == 0) {
-                best_diff = diff_norm;
-                best_avg = gyro_avg;
-            } else if (gyro_diff.length() < ToRad(0.1f)) {
-                // we want the average to be within 0.1 bit, which is 0.04 degrees/s
-                last_average = (gyro_avg * 0.5f) + (last_average * 0.5f);
-                state._gyro_offset = last_average;            
-                converged = true;
-                num_converged++;
-            } else if (diff_norm < best_diff) {
-                best_diff = diff_norm;
-                best_avg = (gyro_avg * 0.5f) + (last_average * 0.5f);
-            }
-            last_average = gyro_avg;
-        //}
-    }
-
-    // stop flashing leds
-    AP_Notify::flags.initialising = false;
-
-    if (num_converged == num_gyros) {
-        // all OK
-        return;
-    }
-
-    // we've kept the user waiting long enough - use the best pair we
-    // found so far
-    hal.console->println();
-   // for (uint8_t k=0; k<num_gyros; k++) {
-        if (!converged) {
-            hal.console->printf_P(PSTR("gyro did not converge: diff=%f dps\n"), ToDeg(best_diff));
-            state._gyro_offset = best_avg;
-        }
-    //}
-     
-    imu._save_parameters();
-}
-
-/*
-void
-AP_InertialSensor_Backend::init_accel()
-{
-    _init_accel();
-
-    // save calibration
-    _save_parameters();
-}*/
 
 void
 AP_InertialSensor_Backend::init_accel()

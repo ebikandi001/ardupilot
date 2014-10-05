@@ -46,8 +46,7 @@ public:
     ///
     /// @param style  The initialisation startup style.
     ///
-    virtual void init( AP_InertialSensor::Start_style style,
-                       AP_InertialSensor::Sample_rate sample_rate);
+    virtual void init( AP_InertialSensor::Sample_rate sample_rate);
 
     // sensor specific init to be overwritten by descendant classes
     virtual uint16_t _init_sensor( AP_InertialSensor::Sample_rate sample_rate ) = 0;
@@ -65,7 +64,7 @@ public:
     /// @note This should not be called unless ::init has previously
     ///       been called, as ::init may perform other work
     ///
-    virtual void init_gyro(void);
+    //virtual void init_gyro(void);
 
     /* Update the sensor data, so that getters are nonblocking.
      * Returns a bool of whether data was updated or not.

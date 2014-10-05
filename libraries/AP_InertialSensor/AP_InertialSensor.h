@@ -69,7 +69,7 @@ public:
 
         // Most recent gyro reading obtained by ::_update
         Vector3f _gyro;
-
+        
         // product id
         AP_Int16 _product_id;
 
@@ -113,9 +113,8 @@ public:
     */
     void init_accel();
 
-    /*Inits all the gyroscopes
-    */
-    void init_gyro();
+
+    void init_gyro(uint8_t instance);
 
     /* Update the sensor data of all the instances, so that getters are nonblocking.
      * Returns a bool of whether data was updated or not.
