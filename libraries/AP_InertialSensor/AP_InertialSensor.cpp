@@ -677,11 +677,7 @@ void AP_InertialSensor::_calculate_trim(Vector3f accel_sample, float& trim_roll,
 
 bool AP_InertialSensor::wait_for_sample(uint16_t timeout_ms) 
 { 
-    for(uint8_t i = 0; i<INS_MAX_INSTANCES; i++)
-    {
-	    drivers[i]->wait_for_sample(timeout_ms);  
-    }
-    return true;
+    drivers[0]->wait_for_sample(timeout_ms);  
 }
 
 float AP_InertialSensor::get_delta_time() const
